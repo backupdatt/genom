@@ -1,0 +1,6 @@
+[Unit]
+Description=BlackMagic Telegram alert for %i
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/blackmagic-bot/alert.sh %i
