@@ -225,12 +225,37 @@ def handle_status(chat_id):
 def handle_accounts(chat_id):
     out, rc = run_script("accounts.sh")
     d = parse_kv(out)
+    today = time.strftime("%Y-%m-%d")
     lines = ["👥 <b>Akun Aktif</b>", "━━━━━━━━━━━━━━━━━━"]
     lines.append(f"VMess  : {d.get('VMESS_COUNT','0')} akun")
     lines.append(f"VLess  : {d.get('VLESS_COUNT','0')} akun")
     lines.append(f"Trojan : {d.get('TROJAN_COUNT','0')} akun")
-    text = "\n".join(lines)
-    send_message(chat_id, text, BACK_BTN)
+    lines.append("━━━━━━━━━━━━━━━━━━")
+
+    section = None
+    emoji = {"VMESS": "📦", "VLESS": "📦", "TROJAN": "📦"}
+    for line in out.splitlines():
+        if line.startswith("---") and line.endswith("---"):
+            section = line.strip("-")
+            lines.append(f"\n{emoji.get(section,'📦')} <b>{section}</b>")
+            continue
+        if section and "| exp:" in line:
+            user, exp = line.split("| exp:")
+            user, exp = user.strip(), exp.strip()
+            try:
+                days_left = (time.mktime(time.strptime(exp, "%Y-%m-%d")) - time.mktime(time.strptime(today, "%Y-%m-%d"))) / 86400
+                days_left = int(days_left)
+                if days_left < 0:
+                    tag = "🔴 expired"
+                elif days_left <= 3:
+                    tag = f"🟡 {days_left}d left"
+                else:
+                    tag = f"🟢 {days_left}d left"
+            except ValueError:
+                tag = ""
+            lines.append(f"• <code>{user}</code> — exp {exp} ({tag})")
+
+    send_message(chat_id, "\n".join(lines), BACK_BTN)
 
 
 def handle_trial(chat_id, proto, label):
