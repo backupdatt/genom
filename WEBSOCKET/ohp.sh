@@ -1,6 +1,6 @@
 #!/bin/bash
 # Ohp Script
-# Mod By HOKAGE LEGEND
+# Mod By BLACK MAGIC
 # ==========================================
 # Color
 RED='\033[0;31m'
@@ -26,7 +26,7 @@ cp ohpserver /usr/local/bin/ohpserver
 cat > /etc/systemd/system/ssh-ohp.service << END
 [Unit]
 Description=SSH OHP Redirection Service
-Documentation=https://t.me/hokagelegend1
+Documentation=https://github.com/backupdatt/genom
 After=network.target nss-lookup.target
 
 [Service]
@@ -47,7 +47,7 @@ END
 cat > /etc/systemd/system/dropbear-ohp.service << END
 [Unit]]
 Description=Dropbear OHP Redirection Service
-Documentation=https://t.me/hokagelegend1
+Documentation=https://github.com/backupdatt/genom
 After=network.target nss-lookup.target
 
 [Service]
@@ -68,7 +68,7 @@ END
 cat > /etc/systemd/system/openvpn-ohp.service << END
 [Unit]]
 Description=OpenVPN OHP Redirection Service
-Documentation=https://t.me/hokagelegend1
+Documentation=https://github.com/backupdatt/genom
 After=network.target nss-lookup.target
 
 [Service]

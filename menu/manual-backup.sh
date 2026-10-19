@@ -26,8 +26,8 @@ WHITE='\033[1;37m'
 
 # Fungsi untuk backup data manual
 clear
-source /etc/hokage/token.json
-if [ -f "/etc/hokage/token.json" ]; then
+source /etc/blackmagic/token.json
+if [ -f "/etc/blackmagic/token.json" ]; then
 rm -rf /root/backup
 mkdir /root/backup
 cp -r /etc/passwd /root/backup/ &> /dev/null
@@ -84,7 +84,7 @@ echo -e " ${GREEN} File backup terkirim ke Telegram BOT.${NC}"
 echo -e " ${TEAL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e " ${TEAL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e " ${PURPLE}   Terimakasih Telah Menggunakan-${NC}"
-echo -e " ${PURPLE}  Script Credit By  HOKAGE LEGEND STORE${NC}"
+echo -e " ${PURPLE}  Script Credit By  BLACK MAGIC STORE${NC}"
 echo -e " ${TEAL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 exit 0
 fi
@@ -93,7 +93,7 @@ echo -e "${RED}     ❐ BOT TOKEN TIDAK TERSEDIA ❐${NC}"
 echo -e "${TEAL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 sleep 1
 clear
-mkdir -p /etc/hokage/
+mkdir -p /etc/blackmagic/
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${PURPLE}       ❐ MENU MANUAL BACKUP ❐ ${NC}"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -106,7 +106,7 @@ sleep 1
 echo "
 TOKEN="${token}"
 ID="${id}"
-" >/etc/hokage/token.json
+" >/etc/blackmagic/token.json
 
 # Fungsi untuk mengaktifkan crontab
 enable_crontab() {
@@ -115,7 +115,7 @@ enable_crontab() {
     clear
     read -p "$(echo -e " ❖${YELLOW} Aktifkan crontab setiap 24 Jam ? (y/N): ${NC}")" enable_crontab
     if [[ "$enable_crontab" =~ ^[Yy]$ ]]; then
-        (crontab -l 2>/dev/null; echo "0 */23 * * * /usr/bin/hokage-manual-backup") | crontab -
+        (crontab -l 2>/dev/null; echo "0 */23 * * * /usr/bin/manual-backup") | crontab -
         echo -e " ❖${GREEN} Crontab telah diaktifkan.${NC}"
     else
         echo -e "${YELLOW}❖ Crontab tidak diaktifkan.${NC}"

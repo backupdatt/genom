@@ -102,7 +102,7 @@ if check_ip_and_get_info "$IP_VPS"; then
     sleep 2
 else
     echo -e "${RED}❌ IP tidak terdaftar!${NC}"
-    echo -e "➥ Hubungi admin ${CYAN}「 ✦ @HokageLegend ✦ 」${NC}"
+    echo -e "➥ Hubungi admin ${CYAN}「 ✦ Admin ✦ 」${NC}"
     exit 1
 fi
 
@@ -131,7 +131,7 @@ show_main_menu() {
     # SSH WS
     if systemctl is-active --quiet ws-stunnel; then status_ws="${GREEN}ON${NC}"; else status_ws="${RED}OFF${NC}"; fi
     # Bot Telegram
-    if systemctl is-active --quiet hokage-bot.service; then status_bot="${GREEN}ON${NC}"; else status_bot="${RED}OFF${NC}"; fi
+    if systemctl is-active --quiet blackmagic-bot.service; then status_bot="${GREEN}ON${NC}"; else status_bot="${RED}OFF${NC}"; fi
 
     # --- TAMPILAN PANEL & MENU ---
     echo -e "$GREEN╭═══════════════════════════════════════════════════╮${NC}"
@@ -185,12 +185,12 @@ while true; do
             ;;
         2)
             echo -e "\n${YELLOW}Mengecek status Bot Telegram...${NC}"
-            systemctl status hokage-bot.service
+            systemctl status blackmagic-bot.service
             read -n 1 -s -r -p "Tekan tombol apa saja untuk kembali..."
             ;;
         3)
             echo -e "\n${YELLOW}Me-restart layanan Bot Telegram...${NC}"
-            systemctl restart hokage-bot.service
+            systemctl restart blackmagic-bot.service
             echo -e "${GREEN}Layanan Bot Telegram berhasil di-restart.${NC}"
             sleep 1
             read -n 1 -s -r -p "Tekan tombol apa saja untuk kembali..."

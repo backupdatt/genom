@@ -130,7 +130,7 @@ fun_bar 'res19'
     echo " "
     echo -e " ${TEAL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e " ${PURPLE}         Terimakasih Telah Menggunakan- ${NC}"
-    echo -e " ${PURPLE}      Script Credit By  HOKAGE LEGEND STORE ${NC}"
+    echo -e " ${PURPLE}      Script Credit By  BLACK MAGIC STORE ${NC}"
     echo -e " ${TEAL}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
 

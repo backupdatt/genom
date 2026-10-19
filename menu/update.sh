@@ -84,7 +84,7 @@ if check_ip_and_get_info "$IP_VPS"; then
     fi
 else
     echo -e "${RED}❌ IP tidak terdaftar!${NC}"
-    echo -e "➥ Hubungi admin ${CYAN}「 ✦ HOKAGE LEGEND ✦ 」${NC}"
+    echo -e "➥ Hubungi admin ${CYAN}「 ✦ BLACK MAGIC ✦ 」${NC}"
     exit 1
 fi
 

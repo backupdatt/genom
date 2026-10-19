@@ -81,7 +81,7 @@ if check_ip_and_get_info "$IP_VPS"; then
     fi
 else
     echo -e "${RED}❌ IP tidak terdaftar!${NC}"
-    echo -e "➥ Hubungi admin ${CYAN}「 ✦ @HokageLegend ✦ 」${NC}"
+    echo -e "➥ Hubungi admin ${CYAN}「 ✦ Admin ✦ 」${NC}"
     exit 1
 fi
 
@@ -347,7 +347,7 @@ clear
 clear && clear && clear
 clear;clear;clear
 echo -e "$COLOR1╭═══════════════════════════════════════════════════╮${NC}"
-echo -e "$COLOR1│${NC} ${COLBG1}            ${WH}• HOKAGE LEGEND PREMIUM •            ${NC} $COLOR1│ $NC"
+echo -e "$COLOR1│${NC} ${COLBG1}            ${WH}• BLACK MAGIC PREMIUM •            ${NC} $COLOR1│ $NC"
 echo -e "$COLOR1╰═══════════════════════════════════════════════════╯${NC}"
 echo -e "$COLOR1╭═══════════════════════════════════════════════════╮${NC}"
 echo -e "$COLOR1│ $NC${WH}❈ System OS          ${COLOR1}: ${WH}$MODEL2"
@@ -394,7 +394,7 @@ echo -e "$COLOR1╰════════════════════�
 
 echo -e "$COLOR1╭═══════════════════════════════════════════════════╮${NC}"
 echo -e "$COLOR1│ $NC ${WH}Versi Script  ${COLOR1}: ${WH}$(cat /opt/.ver) Latest Version${NC}$COLOR1"
-echo -e "$COLOR1│ $NC ${WH}Author        ${COLOR1}: ${WH}HOKAGE LEGEND STORE${NC}$COLOR1"
+echo -e "$COLOR1│ $NC ${WH}Author        ${COLOR1}: ${WH}BLACK MAGIC STORE${NC}$COLOR1"
 echo -e "$COLOR1│ $NC ${WH}Client        ${COLOR1}: ${WH}$client_name${NC}"
 echo -e "$COLOR1│ $NC ${WH}Sisa Hari     ${COLOR1}: ${WH}$days_remaining hari${NC}"
 echo -e "$COLOR1│ $NC ${WH}Expire Date   ${COLOR1}: ${WH}$exp_date${NC}"

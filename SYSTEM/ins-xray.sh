@@ -20,7 +20,7 @@ cd
 if [[ -e /etc/xray/domain ]]; then
 domain=$(cat /etc/xray/domain)
 else
-domain="hokagelegend.web.id"
+domain="GANTI_DOMAIN_FALLBACK_KAMU"
 fi
 sleep 0.5
 mkdir -p /etc/xray
@@ -502,7 +502,7 @@ WantedBy=multi-user.target
 EOF
 cat > /etc/systemd/system/runn.service <<EOF
 [Unit]
-Description=hokage
+Description=xray-helper
 After=network.target
 
 [Service]

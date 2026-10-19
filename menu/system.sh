@@ -82,7 +82,7 @@ if check_ip_and_get_info "$IP_VPS"; then
     fi
 else
     echo -e "${RED}❌ IP tidak terdaftar!${NC}"
-    echo -e "➥ Hubungi admin ${CYAN}「 ✦ @HokageLegend ✦ 」${NC}"
+    echo -e "➥ Hubungi admin ${CYAN}「 ✦ Admin ✦ 」${NC}"
     exit 1
 fi
 
@@ -143,7 +143,7 @@ show_options() {
 show_footer() {
     local author=$(cat "$AUTHOR_FILE" 2>/dev/null || echo "Unknown")
     echo -e " ${COLOR1}╔══════════════════════ ${WH}CREDIT BY${NC} ${COLOR1}═══════════════════╗${NC}"
-    echo -e " ${COLOR1}║                  ${WH}• HOKAGE LEGEND STORE •                ${COLOR1}║${NC}"
+    echo -e " ${COLOR1}║                  ${WH}• BLACK MAGIC STORE •                ${COLOR1}║${NC}"
     echo -e " ${COLOR1}╚════════════════════════════════════════════════════╝${NC}"
 }
 
@@ -312,7 +312,7 @@ systemctl stop $STOPWEBSERVER
 systemctl stop nginx
 curl https://acme-install.netlify.app/acme.sh -o /root/.acme.sh/acme.sh
 chmod +x /root/.acme.sh/acme.sh
-/root/.acme.sh/acme.sh --register-account -m hokage.cfd
+/root/.acme.sh/acme.sh --register-account
 /root/.acme.sh/acme.sh --upgrade --auto-upgrade
 /root/.acme.sh/acme.sh --set-default-ca --server letsencrypt
 /root/.acme.sh/acme.sh --issue -d $domain --standalone -k ec-256

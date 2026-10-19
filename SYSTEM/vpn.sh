@@ -1,5 +1,5 @@
 #!/bin/bash
-# Mod By HOKAGE LEGEND 
+# Mod By BLACK MAGIC 
 
 # By SKT AIO
 # ==================================================
