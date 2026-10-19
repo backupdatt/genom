@@ -2,6 +2,12 @@
 #
 # ==================================================
 
+# refresh package list dulu - tanpa ini, apt install di bawah bisa gagal
+# "Unable to locate package" di VPS fresh yang cache APT-nya belum pernah
+# di-update sama sekali
+export DEBIAN_FRONTEND=noninteractive
+apt update -y
+
 # etc
 apt dist-upgrade -y
 apt install netfilter-persistent -y
