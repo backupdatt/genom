@@ -8,6 +8,36 @@
 export DEBIAN_FRONTEND=noninteractive
 apt update -y
 
+# setup default theme files - tanpa ini, m-theme.sh dan semua menu yang baca
+# warna tema (m-vmess.sh, system.sh, sshws.sh, dll) bakal error "No such file"
+mkdir -p /etc/phreakers/theme
+cat > /etc/phreakers/theme/red <<-END
+TEXT: \033[0;31m
+BG: \033[41m
+END
+cat > /etc/phreakers/theme/yellow <<-END
+TEXT: \033[0;33m
+BG: \033[43m
+END
+cat > /etc/phreakers/theme/magenta <<-END
+TEXT: \033[0;35m
+BG: \033[45m
+END
+cat > /etc/phreakers/theme/green <<-END
+TEXT: \033[0;32m
+BG: \033[42m
+END
+cat > /etc/phreakers/theme/blue <<-END
+TEXT: \033[0;34m
+BG: \033[44m
+END
+cat > /etc/phreakers/theme/cyan <<-END
+TEXT: \033[0;36m
+BG: \033[46m
+END
+echo "green" > /etc/phreakers/theme/color.conf
+echo "Black Magic Store" > /etc/profil
+
 # etc
 apt dist-upgrade -y
 apt install netfilter-persistent -y
