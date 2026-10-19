@@ -175,10 +175,13 @@ def iplim_picker(proto, days, quota):
     ]
 
 
-def account_list_menu(chat_id, proto, action):
+LIST_PAGE_SIZE = 10
+
+
+def account_list_menu(chat_id, proto, action, page=0):
     out, rc = run_script("accounts.sh")
     section = {"vmess": "VMESS", "vless": "VLESS", "trojan": "TROJAN"}[proto]
-    users = []
+    entries = []  # (user, exp, days_left)
     capture = False
     for line in out.splitlines():
         if line == f"---{section}---":
@@ -187,15 +190,35 @@ def account_list_menu(chat_id, proto, action):
         if line.startswith("---"):
             capture = False
             continue
-        if capture and "|" in line:
-            users.append(line.split("|")[0].strip())
-    if not users:
+        if capture and "| exp:" in line:
+            user, exp = line.split("| exp:")
+            user, exp = user.strip(), exp.strip()
+            entries.append((user, exp, days_left_of(exp)))
+
+    if not entries:
         send_message(chat_id, f"Tidak ada akun {PROTO_LABEL[proto]} aktif.", BACK_BTN)
         return
-    rows = [[{"text": u, "callback_data": f"{action}_{proto}_{u}"}] for u in users[:30]]
-    rows.append([{"text": "⬅️ Kembali", "callback_data": "back"}])
+
+    entries.sort(key=lambda e: e[2])
+    total_pages = max(1, (len(entries) + LIST_PAGE_SIZE - 1) // LIST_PAGE_SIZE)
+    page = max(0, min(page, total_pages - 1))
+    chunk = entries[page * LIST_PAGE_SIZE:(page + 1) * LIST_PAGE_SIZE]
+
     verb = {"del": "Hapus", "info": "Cek"}[action]
-    send_message(chat_id, f"{verb} Akun {PROTO_LABEL[proto]} — pilih user:", rows)
+    rows = [[{"text": f"{u} (exp {e}, {tag_for(dl)})", "callback_data": f"{action}_{proto}_{u}"}] for u, e, dl in chunk]
+    nav = []
+    if page > 0:
+        nav.append({"text": "⬅️ Prev", "callback_data": f"{action}page_{proto}_{page-1}"})
+    if page < total_pages - 1:
+        nav.append({"text": "Next ➡️", "callback_data": f"{action}page_{proto}_{page+1}"})
+    if nav:
+        rows.append(nav)
+    rows.append([{"text": "⬅️ Kembali", "callback_data": "back"}])
+    send_message(
+        chat_id,
+        f"{verb} Akun {PROTO_LABEL[proto]} — {len(entries)} total, halaman {page+1}/{total_pages}:",
+        rows,
+    )
 
 
 # ===================== Handlers =====================
@@ -222,40 +245,69 @@ def handle_status(chat_id):
     send_message(chat_id, text, BACK_BTN)
 
 
-def handle_accounts(chat_id):
-    out, rc = run_script("accounts.sh")
-    d = parse_kv(out)
-    today = time.strftime("%Y-%m-%d")
-    lines = ["👥 <b>Akun Aktif</b>", "━━━━━━━━━━━━━━━━━━"]
-    lines.append(f"VMess  : {d.get('VMESS_COUNT','0')} akun")
-    lines.append(f"VLess  : {d.get('VLESS_COUNT','0')} akun")
-    lines.append(f"Trojan : {d.get('TROJAN_COUNT','0')} akun")
-    lines.append("━━━━━━━━━━━━━━━━━━")
+PAGE_SIZE = 15
 
+
+def days_left_of(exp):
+    today = time.strftime("%Y-%m-%d")
+    try:
+        return int((time.mktime(time.strptime(exp, "%Y-%m-%d")) - time.mktime(time.strptime(today, "%Y-%m-%d"))) / 86400)
+    except ValueError:
+        return 99999
+
+
+def tag_for(days_left):
+    if days_left < 0:
+        return "🔴 expired"
+    if days_left <= 3:
+        return f"🟡 {days_left}d left"
+    return f"🟢 {days_left}d left"
+
+
+def parse_accounts(out):
+    """Returns list of (proto, user, exp, days_left), sorted soonest-expiring first."""
     section = None
-    emoji = {"VMESS": "📦", "VLESS": "📦", "TROJAN": "📦"}
+    rows = []
     for line in out.splitlines():
         if line.startswith("---") and line.endswith("---"):
             section = line.strip("-")
-            lines.append(f"\n{emoji.get(section,'📦')} <b>{section}</b>")
             continue
         if section and "| exp:" in line:
             user, exp = line.split("| exp:")
             user, exp = user.strip(), exp.strip()
-            try:
-                days_left = (time.mktime(time.strptime(exp, "%Y-%m-%d")) - time.mktime(time.strptime(today, "%Y-%m-%d"))) / 86400
-                days_left = int(days_left)
-                if days_left < 0:
-                    tag = "🔴 expired"
-                elif days_left <= 3:
-                    tag = f"🟡 {days_left}d left"
-                else:
-                    tag = f"🟢 {days_left}d left"
-            except ValueError:
-                tag = ""
-            lines.append(f"• <code>{user}</code> — exp {exp} ({tag})")
+            rows.append((section, user, exp, days_left_of(exp)))
+    rows.sort(key=lambda r: r[3])
+    return rows
 
-    send_message(chat_id, "\n".join(lines), BACK_BTN)
+
+def handle_accounts(chat_id, page=0):
+    out, rc = run_script("accounts.sh")
+    d = parse_kv(out)
+    rows = parse_accounts(out)
+    total = len(rows)
+    total_pages = max(1, (total + PAGE_SIZE - 1) // PAGE_SIZE)
+    page = max(0, min(page, total_pages - 1))
+    chunk = rows[page * PAGE_SIZE:(page + 1) * PAGE_SIZE]
+
+    lines = ["👥 <b>Akun Aktif</b>", "━━━━━━━━━━━━━━━━━━"]
+    lines.append(f"VMess  : {d.get('VMESS_COUNT','0')} akun")
+    lines.append(f"VLess  : {d.get('VLESS_COUNT','0')} akun")
+    lines.append(f"Trojan : {d.get('TROJAN_COUNT','0')} akun")
+    lines.append(f"Total  : {total} akun — diurut dari yang paling cepat expired")
+    lines.append(f"Halaman {page+1}/{total_pages}")
+    lines.append("━━━━━━━━━━━━━━━━━━")
+    for proto, user, exp, dl in chunk:
+        lines.append(f"[{proto}] <code>{user}</code> — exp {exp} ({tag_for(dl)})")
+    if not chunk:
+        lines.append("Tidak ada akun aktif.")
+
+    nav = []
+    if page > 0:
+        nav.append({"text": "⬅️ Prev", "callback_data": f"accpage_{page-1}"})
+    if page < total_pages - 1:
+        nav.append({"text": "Next ➡️", "callback_data": f"accpage_{page+1}"})
+    keyboard = ([nav] if nav else []) + BACK_BTN
+    send_message(chat_id, "\n".join(lines), keyboard)
 
 
 def handle_trial(chat_id, proto, label):
@@ -430,6 +482,8 @@ def main():
                     handle_status(chat_id)
                 elif data == "accounts":
                     handle_accounts(chat_id)
+                elif data.startswith("accpage_"):
+                    handle_accounts(chat_id, page=int(data.split("_", 1)[1]))
                 elif data == "trial_vmess":
                     handle_trial(chat_id, "vmess", "VMess")
                 elif data == "trial_vless":
@@ -478,6 +532,9 @@ def main():
                 elif data.startswith("dellist_"):
                     proto = data.split("_", 1)[1]
                     account_list_menu(chat_id, proto, "del")
+                elif data.startswith("delpage_"):
+                    _, proto, page = data.split("_")
+                    account_list_menu(chat_id, proto, "del", page=int(page))
                 elif data.startswith("del_") and not data.startswith("del_proto"):
                     _, proto, user = data.split("_", 2)
                     handle_delete_account(chat_id, proto, user)
@@ -486,6 +543,9 @@ def main():
                 elif data.startswith("infolist_"):
                     proto = data.split("_", 1)[1]
                     account_list_menu(chat_id, proto, "info")
+                elif data.startswith("infopage_"):
+                    _, proto, page = data.split("_")
+                    account_list_menu(chat_id, proto, "info", page=int(page))
                 elif data.startswith("info_") and not data.startswith("info_proto"):
                     _, proto, user = data.split("_", 2)
                     handle_info_account(chat_id, proto, user)
