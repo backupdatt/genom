@@ -99,9 +99,66 @@ MAIN_MENU = [
 TOOLS_MENU = [
     [{"text": "🔌 Cek Port", "callback_data": "check_port"},
      {"text": "🔁 Restart Semua Layanan", "callback_data": "restart_all"}],
-    [{"text": "♻️ Reboot VPS", "callback_data": "reboot_confirm"}],
+    [{"text": "⚙️ Atur Backup", "callback_data": "backup_settings"},
+     {"text": "♻️ Reboot VPS", "callback_data": "reboot_confirm"}],
     [{"text": "⬅️ Kembali", "callback_data": "back"}],
 ]
+
+BACKUP_CRON_FILE = "/etc/cron.d/blackmagic-autobackup"
+BACKUP_SCHEDULES = {
+    "harian": "0 3 * * *",
+    "mingguan": "0 3 * * 0",
+}
+
+
+def backup_settings_menu():
+    return [
+        [{"text": "📅 Harian (03:00)", "callback_data": "setbackup_harian"},
+         {"text": "🗓️ Mingguan (Minggu 03:00)", "callback_data": "setbackup_mingguan"}],
+        [{"text": "⛔ Matikan Auto-Backup", "callback_data": "setbackup_off"}],
+        [{"text": "⬅️ Kembali", "callback_data": "tools_menu"}],
+    ]
+
+
+def current_backup_schedule():
+    try:
+        with open(BACKUP_CRON_FILE) as f:
+            content = f.read()
+    except FileNotFoundError:
+        return "Nonaktif"
+    for label, pattern in BACKUP_SCHEDULES.items():
+        if pattern in content:
+            return label.capitalize()
+    return "Custom/Tidak dikenali"
+
+
+def handle_backup_settings(chat_id):
+    status = current_backup_schedule()
+    send_message(
+        chat_id,
+        f"⚙️ <b>Atur Auto-Backup</b>\n━━━━━━━━━━━━━━━━━━\nStatus saat ini: <b>{status}</b>\n\nPilih jadwal baru:",
+        backup_settings_menu(),
+    )
+
+
+def handle_set_backup(chat_id, mode):
+    if mode == "off":
+        try:
+            os.remove(BACKUP_CRON_FILE)
+        except FileNotFoundError:
+            pass
+        send_message(chat_id, "⛔ Auto-backup dimatikan.", BACK_BTN)
+        return
+    pattern = BACKUP_SCHEDULES[mode]
+    content = (
+        "SHELL=/bin/bash\n"
+        "PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin\n"
+        f"{pattern} root /usr/bin/backup >/var/log/blackmagic-autobackup.log 2>&1\n"
+    )
+    with open(BACKUP_CRON_FILE, "w") as f:
+        f.write(content)
+    label = "Harian (jam 03:00)" if mode == "harian" else "Mingguan (Minggu jam 03:00)"
+    send_message(chat_id, f"✅ Auto-backup diatur: <b>{label}</b>", BACK_BTN)
 
 REBOOT_CONFIRM_MENU = [
     [{"text": "✅ Ya, Reboot Sekarang", "callback_data": "reboot_do"},
@@ -496,6 +553,10 @@ def main():
                     handle_backup(chat_id)
                 elif data == "tools_menu":
                     send_message(chat_id, "🛠️ <b>Server Tools</b>\n━━━━━━━━━━━━━━━━━━", TOOLS_MENU)
+                elif data == "backup_settings":
+                    handle_backup_settings(chat_id)
+                elif data.startswith("setbackup_"):
+                    handle_set_backup(chat_id, data.split("_", 1)[1])
                 elif data == "check_port":
                     send_message(chat_id, PORT_INFO, BACK_BTN)
                 elif data == "restart_all":
