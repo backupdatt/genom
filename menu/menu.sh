@@ -237,9 +237,6 @@ clear
 MODEL2=$(cat /etc/os-release | grep -w PRETTY_NAME | head -n1 | sed 's/=//g' | sed 's/"//g' | sed 's/PRETTY_NAME//g')
 LOADCPU=$(printf '%-0.00001s' "$(top -bn1 | awk '/Cpu/ { cpu = "" 100 - $8 "%" }; END { print cpu }')")
 CORE=$(printf '%-1s' "$(grep -c cpu[0-9] /proc/stat)")
-cpu_usage1="$(ps aux | awk 'BEGIN {sum=0} {sum+=$3}; END {print sum}')"
-cpu_usage="$((${cpu_usage1/\.*} / ${corediilik:-1}))"
-cpu_usage+=" %"
 # usage
 vnstat_profile=$(vnstat | sed -n '3p' | awk '{print $1}' | grep -o '[^:]*')
 vnstat -i ${vnstat_profile} >/etc/t1
@@ -352,7 +349,7 @@ echo -e "$COLOR1╰════════════════════�
 echo -e "$COLOR1╭═══════════════════════════════════════════════════╮${NC}"
 echo -e "$COLOR1│ $NC${WH}❈ System OS          ${COLOR1}: ${WH}$MODEL2"
 echo -e "$COLOR1│ $NC${WH}❈ Memory Usage       ${COLOR1}: ${WH}$uram - $tram"
-echo -e "$COLOR1│ $NC${WH}❈ Core & CPU Usage   ${COLOR1}: ${WH}$CORE GB & $cpu_usage"
+echo -e "$COLOR1│ $NC${WH}❈ Core & CPU Usage   ${COLOR1}: ${WH}$CORE Core(s) & $LOADCPU"
 echo -e "$COLOR1│ $NC${WH}❈ ISP                ${COLOR1}: ${WH}$ISP"
 echo -e "$COLOR1│ $NC${WH}❈ City               ${COLOR1}: ${WH}$CITY"
 echo -e "$COLOR1│ $NC${WH}❈ Domain             ${COLOR1}: ${WH}$(cat /etc/xray/domain)"
