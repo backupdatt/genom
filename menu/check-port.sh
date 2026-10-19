@@ -16,6 +16,7 @@ echo -e "${tyblue}|━━━━━━━━━━━━━━━━━━━━�
 echo -e "${tyblue}|    ♡ PORT SERVER VPS AKTIF ♡          ${NC}"
 echo -e "${tyblue}|━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━|${NC}"
 echo -e "${tyblue}|●⏩ Open VPN                : 2086      ${NC}"
+echo -e "${tyblue}|●⏩ SSH WS Stunnel (alt)    : 701       ${NC}"
 echo -e "${tyblue}|●⏩ SSH SSL Websocket       : 443       ${NC}"
 echo -e "${tyblue}|●⏩ SSH Websocket           : 80,443    ${NC}"
 echo -e "${tyblue}|●⏩ Stunnel                 : 8443,8880 ${NC}"

@@ -2,11 +2,11 @@
 import socket, threading, select, signal, sys, time, getopt
 
 # Listen
-LISTENING_ADDR = '127.0.0.1'
+LISTENING_ADDR = '0.0.0.0'
 if sys.argv[1:]:
     LISTENING_PORT = sys.argv[1]
 else:
-    LISTENING_PORT = 700
+    LISTENING_PORT = 701
 #Pass
 PASS = ''
 
@@ -14,7 +14,7 @@ PASS = ''
 BUFLEN = 4096 * 4
 TIMEOUT = 60
 MAX_CONNECTIONS = 1500
-DEFAULT_HOST = '127.0.0.1:50000' # PASTIKAN INI PORT DROPBEAR ANDA
+DEFAULT_HOST = '127.0.0.1:143' # Port dropbear (cek /etc/default/dropbear -> DROPBEAR_PORT)
 RESPONSE = 'HTTP/1.1 101 <b><font color="green">!!.. Konek..cuyy..!!!</font><p style="text-align:center"><b><font color="green"><b>||=========</font><font color="#8A95FF"> ===========</font><font color="#3FFFAD"> ==========|| </font><b><font color="red">===||| BLACK MAGIC |||== </font></b>\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: foo\r\n\r\n'
 
 class Server(threading.Thread):
