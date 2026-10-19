@@ -1,0 +1,13 @@
+[Unit]
+Description=BlackMagic VPN Telegram Bot
+After=network.target xray.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/blackmagic-bot/bot.py
+Restart=always
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target

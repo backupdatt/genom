@@ -177,11 +177,63 @@ while true; do
     
     case $choice in
         1)
-            echo -e "\n${YELLOW}Mempersiapkan instalasi Bot Telegram...${NC}"
-            cd /root
-            rm -f install-boot
-            wget -q https://github.com/backupdatt/Telegram-bot/raw/refs/heads/main/install-boot && chmod +x install-boot && ./install-boot
-            read -n 1 -s -r -p "Instalasi selesai. Tekan tombol apa saja untuk kembali..."
+            echo -e "\n${YELLOW}=== Instalasi Bot Telegram (BlackMagic VPN Bot) ===${NC}"
+            echo -e "${CYAN}Bot ini dikontrol lewat tombol di Telegram: status server,${NC}"
+            echo -e "${CYAN}akun trial VMess/VLess/Trojan, backup, restart layanan, dll.${NC}"
+            echo ""
+            echo -e "${CYAN}1. Buka Telegram -> @BotFather -> /newbot -> copy token-nya.${NC}"
+            read -rp "Masukkan Bot Token: " BOT_TOKEN
+            if [ -z "$BOT_TOKEN" ]; then
+                echo -e "${RED}Token kosong, instalasi dibatalkan.${NC}"
+                read -n 1 -s -r -p "Tekan tombol apa saja untuk kembali..."
+                continue
+            fi
+            echo ""
+            echo -e "${CYAN}2. Chat dulu ke bot kamu (kirim pesan apa saja), lalu tekan Enter.${NC}"
+            read -n 1 -s -r -p "Tekan tombol apa saja setelah chat ke bot..."
+            echo ""
+            CHAT_ID=$(curl -s "https://api.telegram.org/bot${BOT_TOKEN}/getUpdates" \
+                | grep -o '"id":[0-9]*' | tail -1 | grep -o '[0-9]*')
+            if [ -z "$CHAT_ID" ]; then
+                read -rp "Gagal auto-detect Chat ID. Masukkan Chat ID manual: " CHAT_ID
+            else
+                echo -e "${GREEN}Chat ID terdeteksi: ${CHAT_ID}${NC}"
+            fi
+            echo ""
+            echo -e "${YELLOW}Mengunduh file bot...${NC}"
+            mkdir -p /opt/blackmagic-bot
+            BASE="https://raw.githubusercontent.com/backupdatt/genom/main/TOOLS/bot"
+            for f in bot.py status.sh accounts.sh trial-vmess.sh trial-vless.sh trial-trojan.sh restart-all.sh; do
+                wget -q "${BASE}/${f}" -O "/opt/blackmagic-bot/${f}"
+            done
+            chmod +x /opt/blackmagic-bot/*.sh /opt/blackmagic-bot/bot.py
+
+            echo "$BOT_TOKEN" > /usr/bin/token
+            echo "$CHAT_ID" > /usr/bin/idchat
+            echo "$CHAT_ID" > /etc/xray/bot_admins
+
+            cat > /etc/systemd/system/blackmagic-bot.service <<EOF
+[Unit]
+Description=BlackMagic VPN Telegram Bot
+After=network.target xray.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/blackmagic-bot/bot.py
+Restart=always
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+            systemctl daemon-reload
+            systemctl enable blackmagic-bot.service >/dev/null 2>&1
+            systemctl restart blackmagic-bot.service
+
+            echo ""
+            echo -e "${GREEN}Instalasi selesai! Buka Telegram, chat ke bot kamu, kirim /start.${NC}"
+            read -n 1 -s -r -p "Tekan tombol apa saja untuk kembali..."
             ;;
         2)
             echo -e "\n${YELLOW}Mengecek status Bot Telegram...${NC}"
