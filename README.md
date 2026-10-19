@@ -396,6 +396,38 @@ pihak ketiga).
 
 Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
+### [2026-10-20]
+
+Ditemukan & dibenerin pas tes instalasi beneran ke VPS (bukan cuma baca kode) —
+bug-bug ini independen dari perbaikan memory-leak kemarin:
+
+#### 🐛 Fixed
+- **`SYSTEM/ssh-vpn.sh`** — `apt install` dipanggil SEBELUM `apt update`,
+  bikin banyak paket ("jq", "bzip2", "vnstat", dll) gagal "Unable to locate
+  package" di VPS fresh yang cache APT-nya belum pernah di-refresh.
+  Ditambah `apt update -y` di paling awal script.
+- **`SYSTEM/ssh-vpn.sh`** — dropbear cuma di-config, **gak pernah
+  di-`apt install`** — service dropbear gak akan pernah aktif karena
+  paketnya emang gak ada. Ditambah `apt -y install dropbear`.
+- **`SYSTEM/ssh-vpn.sh`** — fail2ban ke-install tapi gak pernah
+  di-`enable`/`start`. Ditambah `systemctl enable --now fail2ban`.
+- **`SYSTEM/ssh-vpn.sh`** — `sed` buat nambah `Port 200` nyari teks
+  "Port 22", tapi default Ubuntu nge-comment baris itu (`#Port 22`) — sed
+  gak match ke baris yang di-comment, port 22 default jadi gak pernah aktif
+  eksplisit begitu ada `Port` directive lain. Diperbaiki jadi idempotent
+  (uncomment dulu, cek belum ada sebelum nambah, gak dobel kalau script
+  kejalanin lebih dari sekali).
+- **`SYSTEM/ins-xray.sh`** — baris install Xray-core pakai flag `-u
+  www-data` yang **udah di-drop** sama installer resmi XTLS
+  (`install-release.sh`) — bikin instalasi binary Xray **gagal diam-diam**
+  (karena gak ada `set -e`, sisa script tetap jalan & "sukses" walau xray
+  gak pernah kepasang). Flag `-u` dihapus dari pemanggilan.
+
+#### 🔒 Security
+- **`SYSTEM/issue.net`** — banner login SSH/dropbear masih branding
+  "HOKAGE LEGEND" + nomor WhatsApp pihak ketiga, muncul ke SETIAP orang
+  yang login SSH ke VPS kamu. Dinetralkan jadi generik.
+
 ### [2026-10-19]
 
 #### 🐛 Fixed
