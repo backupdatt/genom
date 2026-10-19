@@ -68,7 +68,7 @@ touch /var/log/xray/error.log
 touch /var/log/xray/access2.log
 touch /var/log/xray/error2.log
 # setup log rotation biar access.log/error.log gak numpuk tanpa batas
-curl -s https://raw.githubusercontent.com/akbarrozaq691/genom/refs/heads/main/SYSTEM/xray-logrotate.conf -o /etc/logrotate.d/xray 2>/dev/null || cat > /etc/logrotate.d/xray <<-END
+curl -s https://raw.githubusercontent.com/backupdatt/genom/refs/heads/main/SYSTEM/xray-logrotate.conf -o /etc/logrotate.d/xray 2>/dev/null || cat > /etc/logrotate.d/xray <<-END
 /var/log/xray/access.log /var/log/xray/error.log /var/log/xray/access2.log /var/log/xray/error2.log {
     daily
     rotate 3

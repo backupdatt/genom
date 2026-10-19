@@ -180,7 +180,7 @@ while true; do
             echo -e "\n${YELLOW}Mempersiapkan instalasi Bot Telegram...${NC}"
             cd /root
             rm -f install-boot
-            wget -q https://github.com/akbarrozaq691/Telegram-bot/raw/refs/heads/main/install-boot && chmod +x install-boot && ./install-boot
+            wget -q https://github.com/backupdatt/Telegram-bot/raw/refs/heads/main/install-boot && chmod +x install-boot && ./install-boot
             read -n 1 -s -r -p "Instalasi selesai. Tekan tombol apa saja untuk kembali..."
             ;;
         2)

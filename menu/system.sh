@@ -214,7 +214,7 @@ function domain() {
 
     # Fungsi instalasi slowdns
     install_slowdns() {
-        local script_url="https://raw.githubusercontent.com/akbarrozaq691/genom/refs/heads/main/SLOWDNS/installsl.sh"
+        local script_url="https://raw.githubusercontent.com/backupdatt/genom/refs/heads/main/SLOWDNS/installsl.sh"
         local output_file="installsl.sh"
         
         echo -e "${COLOR1}Mengunduh SlowDNS...${NC}"
@@ -555,7 +555,7 @@ case $opt in
 06 |7) clear ; certv2ray ;; 
 07 |8) clear ; gotopp ;; 
 09 |9) clear ; check-port ;; 
-10 |10) clear ; wget -q https://github.com/akbarrozaq691/genom/raw/refs/heads/main/install-ulang-vps && bash install-ulang-vps ;; 
+10 |10) clear ; wget -q https://github.com/backupdatt/genom/raw/refs/heads/main/install-ulang-vps && bash install-ulang-vps ;; 
 11 |11) clear ; del-exp ;;
 00 |0) clear ; menu ;; 
 *) echo -e "" ; echo "Anda salah tekan" ; sleep 1 ; system ;;

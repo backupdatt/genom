@@ -46,11 +46,11 @@ kenapa dulu server suka hang. Gak wajib dibaca buat bisa pakai script-nya.
    ```bash
    apt update && apt install -y curl wget
    cd /root
-   wget https://raw.githubusercontent.com/akbarrozaq691/genom/refs/heads/main/SYSTEM/ssh-vpn.sh
+   wget https://raw.githubusercontent.com/backupdatt/genom/refs/heads/main/SYSTEM/ssh-vpn.sh
    chmod +x ssh-vpn.sh && ./ssh-vpn.sh
    ```
 
-   > ⚠️ Kalau repo `akbarrozaq691/genom` lagi di-set **Private** di GitHub,
+   > ⚠️ Kalau repo `backupdatt/genom` lagi di-set **Private** di GitHub,
    > command di atas bakal gagal (error "404"). Buka dulu jadi **Public**
    > sebentar (lihat kotak di STEP 5), baru jalanin, baru tutup lagi.
 
@@ -321,7 +321,7 @@ sekali.
 ```bash
 cd /root
 rm -f update
-wget https://github.com/akbarrozaq691/genom/raw/refs/heads/main/menu/update.sh -O update
+wget https://github.com/backupdatt/genom/raw/refs/heads/main/menu/update.sh -O update
 chmod +x update && ./update
 ```
 
@@ -332,20 +332,20 @@ chmod +x update && ./update
 > maupun logrotate — itu masih harus ditangani manual lewat STEP 3 kalau
 > ada fix baru ke file-file itu di kemudian hari. Juga, command ini narik
 > dari GitHub, jadi kamu harus **push** dulu perbaikan di STEP 3 & 4 ke
-> repo `akbarrozaq691/genom`, kalau belum, jalanin ini bakal nimpa balik
+> repo `backupdatt/genom`, kalau belum, jalanin ini bakal nimpa balik
 > ke versi lama.
 
 ### Soal buka/tutup repo Public-Private
 
 Banyak script di sini (`ssh-vpn.sh`, `update.sh`, dll) narik file dari
 GitHub pakai cara biasa yang cuma jalan kalau repo-nya **Public**. Kalau
-kamu sengaja bikin repo `akbarrozaq691/genom` jadi Private (biar gak
+kamu sengaja bikin repo `backupdatt/genom` jadi Private (biar gak
 sembarangan dibuka orang), buka dulu sebentar pas mau install/update, baru
 tutup lagi:
 
 ```bash
-gh repo edit akbarrozaq691/genom --visibility public   # sebelum install/update
-gh repo edit akbarrozaq691/genom --visibility private  # tutup lagi setelah selesai
+gh repo edit backupdatt/genom --visibility public   # sebelum install/update
+gh repo edit backupdatt/genom --visibility private  # tutup lagi setelah selesai
 ```
 
 (File lisensi `gnome`/`genom-pro` dari STEP 4, dan `/etc/xray/license.conf`
@@ -452,10 +452,10 @@ Format ikut [Keep a Changelog](https://keepachangelog.com/).
   asli (milik pihak ketiga) yang ter-hardcode, diganti placeholder +
   domain jadi variabel (dulu hardcode ke domain pihak ketiga).
 - Seluruh referensi domain/username pihak ketiga (127 titik di 13 file)
-  diganti ke milik sendiri (`akbarrozaq691`).
+  diganti ke milik sendiri (`backupdatt`).
 - Token lisensi gak lagi ditulis langsung di file yang ikut ter-update
   dari repo (lihat `/etc/xray/license.conf` di atas) — mencegah token
-  bocor kalau repo `akbarrozaq691/genom` sempat di-toggle Public.
+  bocor kalau repo `backupdatt/genom` sempat di-toggle Public.
 
 #### ⚠️ Known Issues (belum diperbaiki, sengaja ditunda)
 - `menu/update.sh` masih narik `/usr/bin/xp` dari `menu/xp`, bukan

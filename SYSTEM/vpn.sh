@@ -4,7 +4,7 @@
 # By SKT AIO
 # ==================================================
 # Link Hosting Kalian
-SKAI0="https://raw.githubusercontent.com/akbarrozaq691/genom/refs/heads/main/SYSTEM/"
+SKAI0="https://raw.githubusercontent.com/backupdatt/genom/refs/heads/main/SYSTEM/"
 
 # initialisasi var
 export DEBIAN_FRONTEND=noninteractive
@@ -18,7 +18,7 @@ apt install openvpn easy-rsa unzip -y
 apt install openssl iptables iptables-persistent -y
 mkdir -p /etc/openvpn/server/easy-rsa/
 cd /etc/openvpn/
-wget https://raw.githubusercontent.com/akbarrozaq691/genom/refs/heads/main/SYSTEM/vpn.zip
+wget https://raw.githubusercontent.com/backupdatt/genom/refs/heads/main/SYSTEM/vpn.zip
 unzip vpn.zip
 rm -f vpn.zip
 chown -R root:root /etc/openvpn/server/easy-rsa/
