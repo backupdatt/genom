@@ -1,0 +1,8 @@
+# SECRET INI SUDAH DIROTASI/DICABUT KARENA SEMPAT TER-COMMIT KE REPO.
+# Jangan commit credential asli ke git lagi. Isi ulang dengan punya sendiri
+# setelah bikin OAuth client baru di Google Cloud Console, lalu simpan file
+# ini di luar repo (misal /etc/xray/rc-clone, bukan di-track git).
+Client ID : GANTI_DENGAN_CLIENT_ID_BARU
+
+Client secret : GANTI_DENGAN_CLIENT_SECRET_BARU
+
