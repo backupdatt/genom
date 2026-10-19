@@ -428,6 +428,45 @@ bug-bug ini independen dari perbaikan memory-leak kemarin:
   "HOKAGE LEGEND" + nomor WhatsApp pihak ketiga, muncul ke SETIAP orang
   yang login SSH ke VPS kamu. Dinetralkan jadi generik.
 
+#### ✨ Added — BlackMagic VPN Telegram Bot (`TOOLS/bot/`)
+Fitur bot Telegram baru biar bisa kelola VPS tanpa SSH, full tombol
+(gak perlu ngetik command). Dibangun dari nol (source bot lama dari
+upstream "HOKAGE LEGEND" udah gak ada di manapun, termasuk repo
+aslinya) — murni Python stdlib (long-polling, no dependency), jalan
+sebagai systemd service `blackmagic-bot.service`.
+- **Status Server** — RAM/CPU/uptime/disk + status xray/nginx/dropbear/
+  fail2ban/ws-stunnel.
+- **Akun Aktif** — list semua akun VMess/VLess/Trojan, diurut dari yang
+  paling cepat expired, dipagingkan (15/halaman) biar gak overflow kalau
+  akunnya ratusan.
+- **Trial VMess/VLess/Trojan** — bikin akun trial, pilih durasi via tombol
+  (5/60/1440 menit).
+- **Buat Akun Full** — pilih protokol → durasi (7/30/90 hari) → quota
+  (unlimited/50/100GB) → limit IP (1/2/unlimited), semua via tombol.
+- **Cek Akun & Hapus Akun** — list user per protokol (dipagingkan,
+  10/halaman, diurut sama kayak Akun Aktif) → pilih → tampil detail/hapus.
+- **Server Tools** — Cek Port, Restart Semua Layanan, Reboot VPS (pakai
+  konfirmasi), dan **Atur Backup** (toggle jadwal auto-backup
+  harian/mingguan/off, nulis langsung ke `/etc/cron.d/blackmagic-autobackup`).
+- **Backup Sekarang** — jalanin `/usr/bin/backup` on-demand (zip config →
+  upload Google Drive via `rclone` → kirim link + file ke chat yang sama).
+- **Auto-backup cron** — default jam 03:00 WIB tiap hari, log ke
+  `/var/log/blackmagic-autobackup.log`.
+- **Expiry notif H-3** (`expiry-check.sh`, cron jam 09:00 WIB) — scan semua
+  akun + license VPS, kirim warning Telegram buat yang exp pas 3 hari lagi.
+- **Crash alert** — `xray.service` & `nginx.service` dikasih drop-in
+  `OnFailure=blackmagic-alert@%n.service` (template unit baru) + nginx
+  ditambah `Restart=on-failure` (sebelumnya gak ada sama sekali) — begitu
+  systemd auto-restart service yang crash, admin langsung kebagian notif
+  Telegram.
+- Hanya admin yang ID chat-nya ada di `/etc/xray/bot_admins` yang bisa
+  pakai bot (chat lain otomatis ditolak).
+- `menu/admin` opsi `[1] Install Bot` diperbaiki — sebelumnya `wget` ke
+  repo `Telegram-bot` yang gak pernah ada (baik di akun sendiri maupun
+  akun upstream), sekarang instalasi interaktif asli: minta Bot Token,
+  auto-detect Chat ID via `getUpdates`, tarik file dari
+  `TOOLS/bot/` di repo ini sendiri.
+
 ### [2026-10-19]
 
 #### 🐛 Fixed
