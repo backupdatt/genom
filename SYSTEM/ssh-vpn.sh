@@ -37,6 +37,8 @@ BG: \033[46m
 END
 echo "green" > /etc/phreakers/theme/color.conf
 echo "Black Magic Store" > /etc/profil
+mkdir -p /opt
+echo "3.0" > /opt/.ver
 
 # etc
 apt dist-upgrade -y
