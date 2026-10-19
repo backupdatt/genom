@@ -234,7 +234,7 @@ echo "/usr/sbin/nologin" >> /etc/shells
 # // install squid for debian 9,10 & ubuntu 20.04
 # install squid for debian 11
 apt -y install squid
-wget -O /etc/squid/squid.conf "https://raw.githubusercontent.com/backupdatt/genom/refs/heads/main/SYSTEM/proxy3.js"
+wget -O /etc/squid/squid.conf "https://raw.githubusercontent.com/backupdatt/genom/refs/heads/main/SYSTEM/squid3.conf"
 sed -i $MYIP2 /etc/squid/squid.conf
 
 # setting vnstat
