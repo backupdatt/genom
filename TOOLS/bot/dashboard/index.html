@@ -434,14 +434,20 @@ Stunnel 8443/8880 · VMess/VLess/Trojan/SS WS TLS 443 · gRPC 443 · WS non-TLS 
         <option value="vmess">VMess</option><option value="vless">VLess</option><option value="trojan">Trojan</option>
       </select>
       <select id="na-days" class="field">
-        <option value="7">7 Hari</option><option value="30" selected>30 Hari</option><option value="90">90 Hari</option>
+        <option value="7">7 Hari</option><option value="30" selected>30 Hari</option><option value="90">90 Hari</option><option value="custom">Custom...</option>
       </select>
+      <input id="na-days-custom" type="number" min="1" class="field hidden" placeholder="Jumlah hari">
+
       <select id="na-quota" class="field">
-        <option value="0">Unlimited Quota</option><option value="50">50 GB</option><option value="100">100 GB</option>
+        <option value="0">Unlimited Quota</option><option value="50">50 GB</option><option value="100">100 GB</option><option value="custom">Custom...</option>
       </select>
+      <input id="na-quota-custom" type="number" min="0" class="field hidden" placeholder="Quota GB (0 = unlimited)">
+
       <select id="na-iplim" class="field">
-        <option value="1">1 IP</option><option value="2">2 IP</option><option value="0">Unlimited IP</option>
+        <option value="1">1 IP</option><option value="2">2 IP</option><option value="0">Unlimited IP</option><option value="custom">Custom...</option>
       </select>
+      <input id="na-iplim-custom" type="number" min="0" class="field hidden" placeholder="Limit IP/device (0 = unlimited)">
+
       <div class="btn-row" style="margin-top:4px;">
         <button id="na-cancel" class="btn btn-ghost" style="flex:1;">Batal</button>
         <button id="na-submit" class="btn btn-primary" style="flex:1;">Buat</button>
@@ -778,12 +784,31 @@ async function doDelete(user) {
 document.getElementById("btn-new-account").onclick = () => document.getElementById("modal-newacc").classList.remove("hidden");
 document.getElementById("na-cancel").onclick = () => document.getElementById("modal-newacc").classList.add("hidden");
 document.getElementById("info-close").onclick = () => document.getElementById("modal-info").classList.add("hidden");
+
+function wireCustomToggle(selectId, inputId) {
+  document.getElementById(selectId).onchange = (e) => {
+    document.getElementById(inputId).classList.toggle("hidden", e.target.value !== "custom");
+  };
+}
+wireCustomToggle("na-days", "na-days-custom");
+wireCustomToggle("na-quota", "na-quota-custom");
+wireCustomToggle("na-iplim", "na-iplim-custom");
+
+function valueOrCustom(selectId, customId, fallback) {
+  const sel = document.getElementById(selectId).value;
+  if (sel === "custom") {
+    const n = parseInt(document.getElementById(customId).value);
+    return isNaN(n) ? fallback : n;
+  }
+  return parseInt(sel);
+}
+
 document.getElementById("na-submit").onclick = async () => {
   const body = {
     proto: document.getElementById("na-proto").value,
-    days: parseInt(document.getElementById("na-days").value),
-    quota: parseInt(document.getElementById("na-quota").value),
-    iplim: parseInt(document.getElementById("na-iplim").value),
+    days: valueOrCustom("na-days", "na-days-custom", 7),
+    quota: valueOrCustom("na-quota", "na-quota-custom", 0),
+    iplim: valueOrCustom("na-iplim", "na-iplim-custom", 0),
   };
   const r = await api("POST", "/accounts/create", body);
   document.getElementById("modal-newacc").classList.add("hidden");

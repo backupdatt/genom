@@ -14,6 +14,10 @@ import urllib.parse
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN") or open("/usr/bin/token").read().strip()
 ADMIN_FILE = "/etc/xray/bot_admins"
+
+# Per-chat state for "Custom" free-text input during the new-account flow.
+# {chat_id_str: {"step": "days"|"quota"|"iplim", "proto": ..., "days": ..., "quota": ...}}
+PENDING = {}
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
@@ -212,6 +216,7 @@ def days_picker(proto):
         [{"text": "7 Hari", "callback_data": f"nd_{proto}_7"},
          {"text": "30 Hari", "callback_data": f"nd_{proto}_30"},
          {"text": "90 Hari", "callback_data": f"nd_{proto}_90"}],
+        [{"text": "✏️ Custom", "callback_data": f"nd_{proto}_custom"}],
         [{"text": "⬅️ Kembali", "callback_data": "newacc_proto"}],
     ]
 
@@ -221,6 +226,7 @@ def quota_picker(proto, days):
         [{"text": "Unlimited", "callback_data": f"nq_{proto}_{days}_0"},
          {"text": "50 GB", "callback_data": f"nq_{proto}_{days}_50"},
          {"text": "100 GB", "callback_data": f"nq_{proto}_{days}_100"}],
+        [{"text": "✏️ Custom", "callback_data": f"nq_{proto}_{days}_custom"}],
         [{"text": "⬅️ Kembali", "callback_data": "newacc_proto"}],
     ]
 
@@ -257,6 +263,7 @@ def iplim_picker(proto, days, quota):
         [{"text": "1 IP", "callback_data": f"ni_{proto}_{days}_{quota}_1"},
          {"text": "2 IP", "callback_data": f"ni_{proto}_{days}_{quota}_2"},
          {"text": "Unlimited", "callback_data": f"ni_{proto}_{days}_{quota}_0"}],
+        [{"text": "✏️ Custom", "callback_data": f"ni_{proto}_{days}_{quota}_custom"}],
         [{"text": "⬅️ Kembali", "callback_data": "newacc_proto"}],
     ]
 
@@ -567,6 +574,34 @@ ONBOARDING_TEXT = (
 )
 
 
+def handle_custom_input(chat_id, text):
+    state = PENDING.get(str(chat_id))
+    if not state:
+        return
+    try:
+        value = int(text)
+        if value < 0:
+            raise ValueError
+    except ValueError:
+        send_message(chat_id, "❌ Harus angka (≥0). Coba ketik lagi:")
+        return
+
+    step = state["step"]
+    proto = state["proto"]
+    if step == "days":
+        if value < 1:
+            send_message(chat_id, "❌ Jumlah hari minimal 1. Coba ketik lagi:")
+            return
+        PENDING.pop(str(chat_id), None)
+        send_message(chat_id, f"📦 Quota akun {PROTO_LABEL[proto]}:", quota_picker(proto, value))
+    elif step == "quota":
+        PENDING.pop(str(chat_id), None)
+        send_message(chat_id, f"🔢 Limit IP akun {PROTO_LABEL[proto]}:", iplim_picker(proto, state["days"], value))
+    elif step == "iplim":
+        PENDING.pop(str(chat_id), None)
+        handle_create_account(chat_id, proto, state["days"], state["quota"], value)
+
+
 def send_main_menu(chat_id, with_onboarding=False):
     text = ONBOARDING_TEXT if with_onboarding else "🔮 <b>BLACK MAGIC VPN BOT</b>\n━━━━━━━━━━━━━━━━━━\nPilih menu di bawah:"
     send_message(chat_id, text, MAIN_MENU)
@@ -597,9 +632,13 @@ def main():
                     send_message(chat_id, "⛔ Akses ditolak. Bot ini khusus admin.")
                     continue
                 if text == "/start":
+                    PENDING.pop(str(chat_id), None)
                     send_main_menu(chat_id, with_onboarding=True)
                 elif text == "/menu":
+                    PENDING.pop(str(chat_id), None)
                     send_main_menu(chat_id)
+                elif str(chat_id) in PENDING:
+                    handle_custom_input(chat_id, text.strip())
 
             elif "callback_query" in update:
                 cq = update["callback_query"]
@@ -658,13 +697,25 @@ def main():
                     send_message(chat_id, f"⏳ Durasi akun {PROTO_LABEL[proto]}:", days_picker(proto))
                 elif data.startswith("nd_"):
                     _, proto, days = data.split("_")
-                    send_message(chat_id, f"📦 Quota akun {PROTO_LABEL[proto]}:", quota_picker(proto, days))
+                    if days == "custom":
+                        PENDING[str(chat_id)] = {"step": "days", "proto": proto}
+                        send_message(chat_id, "✏️ Ketik jumlah hari (angka), misal <code>45</code>:")
+                    else:
+                        send_message(chat_id, f"📦 Quota akun {PROTO_LABEL[proto]}:", quota_picker(proto, days))
                 elif data.startswith("nq_"):
                     _, proto, days, quota = data.split("_")
-                    send_message(chat_id, f"🔢 Limit IP akun {PROTO_LABEL[proto]}:", iplim_picker(proto, days, quota))
+                    if quota == "custom":
+                        PENDING[str(chat_id)] = {"step": "quota", "proto": proto, "days": days}
+                        send_message(chat_id, "✏️ Ketik quota dalam GB (angka, 0 = unlimited):")
+                    else:
+                        send_message(chat_id, f"🔢 Limit IP akun {PROTO_LABEL[proto]}:", iplim_picker(proto, days, quota))
                 elif data.startswith("ni_"):
                     _, proto, days, quota, iplim = data.split("_")
-                    handle_create_account(chat_id, proto, days, quota, iplim)
+                    if iplim == "custom":
+                        PENDING[str(chat_id)] = {"step": "iplim", "proto": proto, "days": days, "quota": quota}
+                        send_message(chat_id, "✏️ Ketik limit IP/device (angka, 0 = unlimited):")
+                    else:
+                        handle_create_account(chat_id, proto, days, quota, iplim)
                 elif data == "del_proto":
                     send_message(chat_id, "🗑️ <b>Hapus Akun</b>\nPilih protokol:", proto_picker("dellist"))
                 elif data.startswith("dellist_"):
