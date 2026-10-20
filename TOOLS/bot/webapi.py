@@ -119,6 +119,14 @@ def h_account_renew(req):
     return {"ok": True, **parse_kv(out)}
 
 
+def h_account_limit(req):
+    b = req["body"]
+    out, rc = run_script("account.sh", "limit", b["proto"], b["user"], b.get("quota", 0), b.get("iplim", 0))
+    if "NOTFOUND" in out:
+        return {"ok": False, "error": "not found"}
+    return {"ok": True, **parse_kv(out)}
+
+
 def h_account_info(req):
     b = req["body"]
     out, rc = run_script("account.sh", "info", b["proto"], b["user"])
@@ -235,6 +243,7 @@ ROUTES = {
     ("POST", "/dashboard/api/accounts/create"): h_account_create,
     ("POST", "/dashboard/api/accounts/delete"): h_account_delete,
     ("POST", "/dashboard/api/accounts/renew"): h_account_renew,
+    ("POST", "/dashboard/api/accounts/limit"): h_account_limit,
     ("POST", "/dashboard/api/accounts/info"): h_account_info,
     ("POST", "/dashboard/api/trial"): h_trial,
     ("POST", "/dashboard/api/backup/now"): h_backup_now,

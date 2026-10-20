@@ -92,6 +92,7 @@ MAIN_MENU = [
      {"text": "🔍 Cek Akun", "callback_data": "info_proto"}],
     [{"text": "🔁 Renew Akun", "callback_data": "renew_proto"},
      {"text": "🗑️ Hapus Akun", "callback_data": "del_proto"}],
+    [{"text": "⚙️ Atur Limit Akun", "callback_data": "limit_proto"}],
     [{"text": "🔄 Restart Xray", "callback_data": "restart_xray"},
      {"text": "💾 Backup Sekarang", "callback_data": "backup_now"}],
     [{"text": "🛠️ Server Tools", "callback_data": "tools_menu"}],
@@ -233,6 +234,24 @@ def renew_days_picker(proto, user):
     ]
 
 
+def limit_quota_picker(proto, user):
+    return [
+        [{"text": "Unlimited", "callback_data": f"lq_{proto}_{user}_0"},
+         {"text": "50 GB", "callback_data": f"lq_{proto}_{user}_50"},
+         {"text": "100 GB", "callback_data": f"lq_{proto}_{user}_100"}],
+        [{"text": "⬅️ Kembali", "callback_data": f"limitlist_{proto}"}],
+    ]
+
+
+def limit_iplim_picker(proto, user, quota):
+    return [
+        [{"text": "1 IP", "callback_data": f"li_{proto}_{user}_{quota}_1"},
+         {"text": "2 IP", "callback_data": f"li_{proto}_{user}_{quota}_2"},
+         {"text": "Unlimited", "callback_data": f"li_{proto}_{user}_{quota}_0"}],
+        [{"text": "⬅️ Kembali", "callback_data": f"limitlist_{proto}"}],
+    ]
+
+
 def iplim_picker(proto, days, quota):
     return [
         [{"text": "1 IP", "callback_data": f"ni_{proto}_{days}_{quota}_1"},
@@ -271,7 +290,7 @@ def account_list_menu(chat_id, proto, action, page=0):
     page = max(0, min(page, total_pages - 1))
     chunk = entries[page * LIST_PAGE_SIZE:(page + 1) * LIST_PAGE_SIZE]
 
-    verb = {"del": "Hapus", "info": "Cek", "renew": "Renew"}[action]
+    verb = {"del": "Hapus", "info": "Cek", "renew": "Renew", "limit": "Atur Limit"}[action]
     rows = [[{"text": f"{u} (exp {e}, {tag_for(dl)})", "callback_data": f"{action}_{proto}_{u}"}] for u, e, dl in chunk]
     nav = []
     if page > 0:
@@ -419,6 +438,20 @@ def handle_backup(chat_id):
         send_message(chat_id, f"❌ Backup gagal.\n<code>{out[-500:]}</code>", BACK_BTN)
 
 
+LINK_LABELS = [
+    ("LINK_TLS", "TLS (WS)"), ("LINK_NTLS", "NTLS (WS)"), ("LINK_GRPC", "gRPC"),
+    ("LINK_UPGRADE", "HTTPUpgrade"), ("LINK_XHTTP", "XHTTP"), ("LINK_WS", "WS"),
+]
+
+
+def format_links(d):
+    lines = []
+    for key, label in LINK_LABELS:
+        if key in d:
+            lines.append(f"<b>{label}</b>\n<code>{d[key]}</code>")
+    return "\n\n".join(lines) if lines else "-"
+
+
 def handle_create_account(chat_id, proto, days, quota, iplim):
     send_message(chat_id, f"⌛ Membuat akun {PROTO_LABEL[proto]} ({days} hari, quota {quota or 'unlimited'} GB, {iplim or 'unlimited'} IP)...")
     out, rc = run_script("account.sh", "create", proto, days, quota, iplim, timeout=60)
@@ -436,7 +469,7 @@ def handle_create_account(chat_id, proto, days, quota, iplim):
         f"📦 Quota  : {d.get('QUOTA','0')} GB ({'unlimited' if d.get('QUOTA')=='0' else 'limited'})\n"
         f"🔢 IP     : {d.get('IPLIM','0')} ({'unlimited' if d.get('IPLIM')=='0' else 'limited'})\n"
         "━━━━━━━━━━━━━━━━━━\n"
-        f"🔗 Link:\n<code>{d.get('LINK1','-')}</code>"
+        f"🔗 <b>Link ({PROTO_LABEL[proto]})</b>\n\n{format_links(d)}"
     )
     send_message(chat_id, text, BACK_BTN)
 
@@ -464,7 +497,7 @@ def handle_info_account(chat_id, proto, user):
         f"⏳ Exp    : {d.get('EXP','?')}\n"
         f"🔢 IP Limit : {d.get('IPLIM','?')}\n"
         "━━━━━━━━━━━━━━━━━━\n"
-        f"🔗 Link:\n<code>{d.get('LINK1','-')}</code>"
+        f"🔗 <b>Link ({PROTO_LABEL[proto]})</b>\n\n{format_links(d)}"
     )
     send_message(chat_id, text, BACK_BTN)
 
@@ -482,6 +515,22 @@ def handle_renew_account(chat_id, proto, user, extra_days):
         f"📅 Exp Lama : {d.get('OLD_EXP','?')}\n"
         f"📅 Exp Baru : {d.get('NEW_EXP','?')}\n"
         f"➕ Tambahan : {d.get('EXTRA_DAYS','?')} hari"
+    )
+    send_message(chat_id, text, BACK_BTN)
+
+
+def handle_set_limit(chat_id, proto, user, quota, iplim):
+    out, rc = run_script("account.sh", "limit", proto, user, quota, iplim, timeout=30)
+    if "NOTFOUND" in out:
+        send_message(chat_id, "❌ Akun tidak ditemukan.", BACK_BTN)
+        return
+    d = parse_kv(out)
+    text = (
+        f"✅ <b>Limit Akun Diperbarui</b>\n"
+        "━━━━━━━━━━━━━━━━━━\n"
+        f"👤 User  : <code>{d.get('USER','?')}</code>\n"
+        f"📦 Quota : {d.get('QUOTA','0')} GB ({'unlimited' if d.get('QUOTA')=='0' else 'limited'})\n"
+        f"🔢 IP    : {d.get('IPLIM','0')} ({'unlimited' if d.get('IPLIM')=='0' else 'limited'})"
     )
     send_message(chat_id, text, BACK_BTN)
 
@@ -655,6 +704,30 @@ def main():
                     extra_days = parts[-1]
                     user = "_".join(parts[2:-1])
                     handle_renew_account(chat_id, proto, user, extra_days)
+                elif data == "limit_proto":
+                    send_message(chat_id, "⚙️ <b>Atur Limit Akun</b>\nPilih protokol:", proto_picker("limitlist"))
+                elif data.startswith("limitlist_"):
+                    proto = data.split("_", 1)[1]
+                    account_list_menu(chat_id, proto, "limit")
+                elif data.startswith("limitpage_"):
+                    _, proto, page = data.split("_")
+                    account_list_menu(chat_id, proto, "limit", page=int(page))
+                elif data.startswith("limit_") and not data.startswith("limit_proto"):
+                    _, proto, user = data.split("_", 2)
+                    send_message(chat_id, f"📦 Quota buat <code>{user}</code>?", limit_quota_picker(proto, user))
+                elif data.startswith("lq_"):
+                    parts = data.split("_")
+                    proto = parts[1]
+                    quota = parts[-1]
+                    user = "_".join(parts[2:-1])
+                    send_message(chat_id, f"🔢 Limit IP buat <code>{user}</code>?", limit_iplim_picker(proto, user, quota))
+                elif data.startswith("li_"):
+                    parts = data.split("_")
+                    proto = parts[1]
+                    iplim = parts[-1]
+                    quota = parts[-2]
+                    user = "_".join(parts[2:-2])
+                    handle_set_limit(chat_id, proto, user, quota, iplim)
 
 
 if __name__ == "__main__":

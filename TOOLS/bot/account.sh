@@ -5,6 +5,7 @@
 #   account.sh delete <vmess|vless|trojan> <user>
 #   account.sh info   <vmess|vless|trojan> <user>
 #   account.sh renew  <vmess|vless|trojan> <user> <extra_days>
+#   account.sh limit  <vmess|vless|trojan> <user> <quota_gb> <ip_limit>
 set -e
 CONFIG="/etc/xray/config.json"
 action="$1"; proto="$2"
@@ -16,6 +17,37 @@ case "$proto" in
   trojan) mark1="#tr"; mark2="#trg"; dir="/etc/trojan"; field="password" ;;
   *) echo "Unknown protocol: $proto"; exit 1 ;;
 esac
+
+# Emits every link variant (TLS/NTLS/gRPC/HTTPUpgrade/XHTTP for vmess & vless,
+# WS/gRPC for trojan — trojan has no httpupgrade/xhttp inbound configured).
+emit_links() {
+  local user="$1" secret="$2"
+  case "$proto" in
+    vmess)
+      local j_tls="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${domain}\",\"port\":\"443\",\"id\":\"${secret}\",\"aid\":\"0\",\"net\":\"ws\",\"path\":\"/vmess\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"tls\"}"
+      local j_ntls="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${domain}\",\"port\":\"80\",\"id\":\"${secret}\",\"aid\":\"0\",\"net\":\"ws\",\"path\":\"/vmess\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"none\"}"
+      local j_grpc="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${domain}\",\"port\":\"443\",\"id\":\"${secret}\",\"aid\":\"0\",\"net\":\"grpc\",\"path\":\"vmess-grpc\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"tls\"}"
+      local j_up="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${domain}\",\"port\":\"443\",\"id\":\"${secret}\",\"aid\":\"0\",\"net\":\"httpupgrade\",\"path\":\"/vmess-up\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"tls\",\"sni\":\"${domain}\",\"alpn\":\"http/1.1\"}"
+      local j_xh="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${domain}\",\"port\":\"443\",\"id\":\"${secret}\",\"aid\":\"0\",\"net\":\"xhttp\",\"path\":\"/vmess-xhttp\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"tls\",\"sni\":\"${domain}\",\"alpn\":\"h2,http/1.1\"}"
+      echo "LINK_TLS=vmess://$(echo -n "$j_tls" | base64 -w0)"
+      echo "LINK_NTLS=vmess://$(echo -n "$j_ntls" | base64 -w0)"
+      echo "LINK_GRPC=vmess://$(echo -n "$j_grpc" | base64 -w0)"
+      echo "LINK_UPGRADE=vmess://$(echo -n "$j_up" | base64 -w0)"
+      echo "LINK_XHTTP=vmess://$(echo -n "$j_xh" | base64 -w0)"
+      ;;
+    vless)
+      echo "LINK_TLS=vless://${secret}@${domain}:443?path=/vless&security=tls&encryption=none&host=${domain}&type=ws&sni=${domain}#${user}"
+      echo "LINK_NTLS=vless://${secret}@${domain}:80?path=/vless&security=none&encryption=none&host=${domain}&type=ws#${user}"
+      echo "LINK_GRPC=vless://${secret}@${domain}:443?mode=gun&security=tls&encryption=none&type=grpc&serviceName=vless-grpc&sni=${domain}#${user}"
+      echo "LINK_UPGRADE=vless://${secret}@${domain}:443?path=/vless-up&security=tls&encryption=none&host=${domain}&type=httpupgrade&sni=${domain}&alpn=http/1.1#${user}"
+      echo "LINK_XHTTP=vless://${secret}@${domain}:443?path=/vless-xhttp&security=tls&encryption=none&host=${domain}&type=xhttp&sni=${domain}&alpn=h2,http/1.1#${user}"
+      ;;
+    trojan)
+      echo "LINK_WS=trojan://${secret}@${domain}:443?path=%2Ftrojan-ws&security=tls&host=${domain}&type=ws&sni=${domain}#${user}"
+      echo "LINK_GRPC=trojan://${secret}@${domain}:443?mode=gun&security=tls&type=grpc&serviceName=trojan-grpc&sni=${domain}#${user}"
+      ;;
+  esac
+}
 
 case "$action" in
 
@@ -62,14 +94,7 @@ create)
   echo "QUOTA=${quota}"
   echo "IPLIM=${iplim}"
   echo "DOMAIN=${domain}"
-  if [ "$proto" = "trojan" ]; then
-    echo "LINK1=trojan://${uuid}@${domain}:443?path=%2Ftrojan-ws&security=tls&host=${domain}&type=ws&sni=${domain}#${user}"
-  elif [ "$proto" = "vless" ]; then
-    echo "LINK1=vless://${uuid}@${domain}:443?path=/vless&security=tls&encryption=none&host=${domain}&type=ws&sni=${domain}#${user}"
-  else
-    json="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${domain}\",\"port\":\"443\",\"id\":\"${uuid}\",\"aid\":\"0\",\"net\":\"ws\",\"path\":\"/vmess\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"tls\"}"
-    echo "LINK1=vmess://$(echo -n "$json" | base64 -w0)"
-  fi
+  emit_links "$user" "$uuid"
   ;;
 
 delete)
@@ -107,14 +132,7 @@ info)
   echo "EXP=${exp}"
   echo "IPLIM=${iplim}"
   echo "DOMAIN=${domain}"
-  if [ "$proto" = "trojan" ]; then
-    echo "LINK1=trojan://${secret}@${domain}:443?path=%2Ftrojan-ws&security=tls&host=${domain}&type=ws&sni=${domain}#${user}"
-  elif [ "$proto" = "vless" ]; then
-    echo "LINK1=vless://${secret}@${domain}:443?path=/vless&security=tls&encryption=none&host=${domain}&type=ws&sni=${domain}#${user}"
-  else
-    json="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${domain}\",\"port\":\"443\",\"id\":\"${secret}\",\"aid\":\"0\",\"net\":\"ws\",\"path\":\"/vmess\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"tls\"}"
-    echo "LINK1=vmess://$(echo -n "$json" | base64 -w0)"
-  fi
+  emit_links "$user" "$secret"
   ;;
 
 renew)
@@ -140,6 +158,33 @@ renew)
   echo "OLD_EXP=${exp}"
   echo "NEW_EXP=${new_exp}"
   echo "EXTRA_DAYS=${extra_days}"
+  ;;
+
+limit)
+  user="$3"; quota="${4:-0}"; iplim="${5:-0}"
+  [[ "$quota" =~ ^[0-9]+$ ]] || quota=0
+  [[ "$iplim" =~ ^[0-9]+$ ]] || iplim=0
+
+  exists=$(grep -c -E "^${mark2} ${user} " "$CONFIG" 2>/dev/null) || true
+  if [ "${exists:-0}" -eq 0 ]; then
+    echo "NOTFOUND"
+    exit 2
+  fi
+
+  mkdir -p "$dir"
+  if [ "$quota" = "0" ]; then
+    rm -f "${dir}/${user}"
+  else
+    bytes=$(( quota * 1024 * 1024 * 1024 ))
+    echo "$bytes" > "${dir}/${user}"
+  fi
+
+  realiplim=$iplim; [ "$realiplim" = "0" ] && realiplim=9999
+  echo "$realiplim" > "${dir}/${user}IP"
+
+  echo "USER=${user}"
+  echo "QUOTA=${quota}"
+  echo "IPLIM=${iplim}"
   ;;
 
 *)

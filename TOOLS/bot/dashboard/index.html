@@ -648,6 +648,7 @@ function renderAkunTable() {
         <span class="btn-row" style="justify-content:flex-end;">
           <button class="btn btn-ghost btn-sm" onclick="doInfo('${r.user}')">Info</button>
           <button class="btn btn-ghost btn-sm" onclick="doRenew('${r.user}')">Renew</button>
+          <button class="btn btn-ghost btn-sm" onclick="doLimit('${r.user}')">Limit</button>
           <button class="btn btn-danger btn-sm" onclick="doDelete('${r.user}')">Hapus</button>
         </span>
       </td>
@@ -678,9 +679,19 @@ async function doInfo(user) {
     <div><b>Domain:</b> ${r.DOMAIN}</div>
     <div><b>Exp:</b> ${r.EXP}</div>
     <div><b>IP Limit:</b> ${r.IPLIM}</div>
-    <div style="word-break:break-all;"><b>Link:</b><br><code style="font-size:11.5px;">${r.LINK1}</code></div>
+    ${formatLinks(r)}
   `;
   document.getElementById("modal-info").classList.remove("hidden");
+}
+
+const LINK_LABELS = [
+  ["LINK_TLS", "TLS (WS)"], ["LINK_NTLS", "NTLS (WS)"], ["LINK_GRPC", "gRPC"],
+  ["LINK_UPGRADE", "HTTPUpgrade"], ["LINK_XHTTP", "XHTTP"], ["LINK_WS", "WS"],
+];
+function formatLinks(r) {
+  return LINK_LABELS.filter(([k]) => r[k]).map(([k, label]) => `
+    <div style="word-break:break-all;margin-top:6px;"><b>${label}:</b><br><code style="font-size:11px;">${r[k]}</code></div>
+  `).join("");
 }
 
 async function doRenew(user) {
@@ -690,6 +701,16 @@ async function doRenew(user) {
   if (!r.ok) return toast("Gagal renew: " + r.error, false);
   toast(`${user} diperpanjang sampai ${r.NEW_EXP}`);
   loadAccounts();
+}
+
+async function doLimit(user) {
+  const quota = prompt("Quota GB (0 = unlimited)?", "0");
+  if (quota === null) return;
+  const iplim = prompt("Limit IP/device (0 = unlimited)?", "1");
+  if (iplim === null) return;
+  const r = await api("POST", "/accounts/limit", { proto: currentProto, user, quota: parseInt(quota) || 0, iplim: parseInt(iplim) || 0 });
+  if (!r.ok) return toast("Gagal atur limit: " + r.error, false);
+  toast(`${user}: quota ${r.QUOTA === "0" ? "unlimited" : r.QUOTA + "GB"}, IP ${r.IPLIM === "0" ? "unlimited" : r.IPLIM}`);
 }
 
 async function doDelete(user) {
