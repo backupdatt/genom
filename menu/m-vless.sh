@@ -1413,7 +1413,7 @@ case $opt in
 9) clear ; lock-vless  ;;
 10) clear ; quota-user  ;;
 11) clear ; res-user  ;;
-0) clear ; menu  ;;
+0) clear ; exec menu  ;;
 x) exit ;;
-*) echo "salah tekan " ; sleep 1 ; m-vless ;;
+*) echo "salah tekan " ; sleep 1 ; exec m-vless ;;
 esac

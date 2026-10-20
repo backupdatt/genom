@@ -1247,7 +1247,7 @@ case $opt in
 09 | 9) clear ; lock-tr ;;
 10 | 10) clear ; quota-user ;;
 11 | 11) clear ; res-user ;;
-00 | 0) clear ; menu ;;
+00 | 0) clear ; exec menu ;;
 x) exit ;;
-*) echo "SALAH TEKAN" ; sleep 1 ; m-trojan ;;
+*) echo "SALAH TEKAN" ; sleep 1 ; exec m-trojan ;;
 esac

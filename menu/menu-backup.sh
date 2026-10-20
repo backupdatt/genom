@@ -73,6 +73,6 @@ case $opt in
 01 | 1) clear ; backup ;;
 02 | 2) clear ; restore ;;
 02 | 3) clear ; atur-backup ;;
-00 | 0) clear ; menu ;;
-*) clear ; menu-backup ;;
+00 | 0) clear ; exec menu ;;
+*) clear ; exec menu-backup ;;
 esac

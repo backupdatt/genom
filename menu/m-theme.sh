@@ -65,8 +65,8 @@ case $colormenu in
     04|4) change_theme "green" ;;
     05|5) change_theme "blue" ;;
     06|6) change_theme "cyan" ;;
-    00|0) clear; menu ;;
-    *) clear; m-theme ;;
+    00|0) clear; exec menu ;;
+    *) clear; exec m-theme ;;
 esac
 
 echo -e "\n${NC}"

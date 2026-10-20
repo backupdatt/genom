@@ -176,7 +176,7 @@ case $colormenu in
     04|4) change_theme "green" ;;
     05|5) change_theme "blue" ;;
     06|6) change_theme "cyan" ;;
-    00|0) clear; menu ;;
+    00|0) clear; exec menu ;;
     *) clear; m-theme ;;
 esac
 
@@ -286,8 +286,7 @@ clear
                 read -n 1 -s -r -p " Instalasi selesai! Tekan tombol untuk melanjutkan..."
                 ;;
             0)
-                menu
-                break
+                exec menu
                 ;;
             *)
                 echo -e "${RED}Pilihan tidak valid!${NC}"
@@ -557,6 +556,6 @@ case $opt in
 09 |9) clear ; check-port ;; 
 10 |10) clear ; wget -q https://github.com/backupdatt/genom/raw/refs/heads/main/install-ulang-vps && bash install-ulang-vps ;; 
 11 |11) clear ; del-exp ;;
-00 |0) clear ; menu ;; 
-*) echo -e "" ; echo "Anda salah tekan" ; sleep 1 ; system ;;
+00 |0) clear ; exec menu ;;
+*) echo -e "" ; echo "Anda salah tekan" ; sleep 1 ; exec system ;;
 esac

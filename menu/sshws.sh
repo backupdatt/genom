@@ -1308,8 +1308,8 @@ case $opt in
 08 | 8) clear ; listssh  ;;
 09 | 9) clear ; lockssh  ;;
 10 | 10) clear ; hapuslama  ;;
-00 | 0) clear ; menu  ;;
-X  | 0) clear ; sshws ;;
+00 | 0) clear ; exec menu  ;;
+X  | 0) clear ; exec sshws ;;
 x) exit ;;
-*) echo "Anda salah tekan " ; sleep 1 ; sshws ;;
+*) echo "Anda salah tekan " ; sleep 1 ; exec sshws ;;
 esac

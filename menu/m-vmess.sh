@@ -1751,6 +1751,6 @@ case $opt in
 09 | 9) clear ; lock-vmess ;;
 10 | 10) clear ; quota-user ;;
 11 | 11) clear ; res-user ;;
-00 | 0) clear ; menu ;;
-*) clear ; m-vmess ;;
+00 | 0) clear ; exec menu ;;
+*) clear ; exec m-vmess ;;
 esac

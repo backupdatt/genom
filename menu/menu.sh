@@ -412,6 +412,6 @@ case $opt in
 11 | 11) clear ; menu-backup;;
 12 | 12) clear ; online;;
 15 | 15) clear ; admin;;
-00 | 0) clear ; menu ;;
-*) clear ; menu ;;
+00 | 0) clear ; exec menu ;;
+*) clear ; exec menu ;;
 esac
