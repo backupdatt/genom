@@ -41,8 +41,13 @@ ipinfo_lookup() {
   city=$(echo "$resp" | grep -oP '"city":\s*"\K(?:[^"\\]|\\.)*' | sed 's/\\"/"/g')
   org=$(echo "$resp" | grep -oP '"org":\s*"\K(?:[^"\\]|\\.)*' | sed 's/\\"/"/g')
 
-  { grep -v "^${ip}|" "$IPINFO_CACHE" 2>/dev/null; echo "${ip}|${now}|${city}|${org}"; } > "${IPINFO_CACHE}.tmp" \
-    && mv "${IPINFO_CACHE}.tmp" "$IPINFO_CACHE"
+  # Rebuild the cache dropping this IP's old entry AND anything past its TTL,
+  # so the file can't grow forever as CGNAT rotates customers through IPs.
+  {
+    awk -F'|' -v now="$now" -v ttl="$IPINFO_TTL" -v skip="$ip" \
+      '$1 != skip && (now - $2) < ttl' "$IPINFO_CACHE" 2>/dev/null
+    echo "${ip}|${now}|${city}|${org}"
+  } > "${IPINFO_CACHE}.tmp" && mv "${IPINFO_CACHE}.tmp" "$IPINFO_CACHE"
 
   echo "${city}|${org}"
 }

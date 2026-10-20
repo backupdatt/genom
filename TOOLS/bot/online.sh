@@ -37,6 +37,7 @@ for proto_mark in "#vmg:vmess" "#vlg:vless" "#trg:trojan"; do
     ip_count=$(printf '%s\n' "${RECENT[@]}" | grep -w "email: ${user}$" | awk '{print $4}' | cut -d: -f1 \
         | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | grep -v '^127\.0\.0\.1$' | sort -u | grep -c . || true)
     last_ip=$(echo "$last_line" | awk '{print $4}' | cut -d: -f1)
+    [[ "$last_ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || last_ip=""
     IFS='|' read -r city isp <<< "$(ipinfo_lookup "$last_ip")"
     city=$(json_escape "$city"); isp=$(json_escape "$isp")
     [ "$first" -eq 0 ] && echo -n ","
