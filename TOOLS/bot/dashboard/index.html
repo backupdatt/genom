@@ -313,7 +313,13 @@ pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--mut
         <div class="viz-root" id="acc-chart" style="margin-top:14px;"></div>
       </div>
       <div class="panel">
-        <div class="panel-label">Online Sekarang <span style="font-weight:400;text-transform:none;letter-spacing:0;">— aktif dalam 2 menit terakhir</span></div>
+        <div class="panel-label" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <span>Online Sekarang <span style="font-weight:400;text-transform:none;letter-spacing:0;">— aktif dalam 2 menit terakhir</span></span>
+          <span class="btn-row">
+            <button id="online-prev" class="btn btn-ghost btn-sm">‹ Prev</button>
+            <button id="online-next" class="btn btn-ghost btn-sm">Next ›</button>
+          </span>
+        </div>
         <div id="online-summary" style="font-size:13px;color:var(--muted);margin-bottom:8px;"></div>
         <div id="online-list" style="display:flex;flex-direction:column;gap:6px;"></div>
       </div>
@@ -575,19 +581,38 @@ async function loadDashboard() {
   } catch (e) { /* history not ready yet */ }
 
   const onl = await api("GET", "/online");
-  const sessions = (onl.sessions || []).filter(s => s.online).sort((a, b) => a.last_seen_secs_ago - b.last_seen_secs_ago);
-  const totalDevices = sessions.reduce((sum, s) => sum + (s.ip_count || 0), 0);
-  document.getElementById("online-summary").textContent = sessions.length
-    ? `${sessions.length} akun aktif · ${totalDevices} device total`
+  onlineSessions = (onl.sessions || []).filter(s => s.online).sort((a, b) => a.last_seen_secs_ago - b.last_seen_secs_ago);
+  onlinePage = 0;
+  renderOnlineList();
+}
+
+let onlineSessions = [];
+let onlinePage = 0;
+const ONLINE_PAGE_SIZE = 5;
+
+function renderOnlineList() {
+  const totalDevices = onlineSessions.reduce((sum, s) => sum + (s.ip_count || 0), 0);
+  document.getElementById("online-summary").textContent = onlineSessions.length
+    ? `${onlineSessions.length} akun aktif · ${totalDevices} device total`
     : "";
-  document.getElementById("online-list").innerHTML = sessions.length
-    ? sessions.map(s => `
+
+  const totalPages = Math.max(1, Math.ceil(onlineSessions.length / ONLINE_PAGE_SIZE));
+  onlinePage = Math.max(0, Math.min(onlinePage, totalPages - 1));
+  const page = onlineSessions.slice(onlinePage * ONLINE_PAGE_SIZE, (onlinePage + 1) * ONLINE_PAGE_SIZE);
+
+  document.getElementById("online-list").innerHTML = page.length
+    ? page.map(s => `
         <div class="svc-row">
           <span><span class="dot on" style="margin-right:8px;"></span>[${s.proto}] <code>${s.user}</code></span>
           <span style="color:var(--muted);font-size:12px;text-align:right;">${s.ip_count} IP · ${s.recent_hits} request · ${s.last_seen_secs_ago}s lalu${s.city || s.isp ? `<br>${s.city || "?"} · ${s.isp || "?"}` : ""}</span>
         </div>`).join("")
     : `<div style="color:var(--muted-2);font-size:12px;padding:10px 0;">Tidak ada yang online sekarang.</div>`;
+
+  document.getElementById("online-prev").disabled = onlinePage === 0;
+  document.getElementById("online-next").disabled = onlinePage >= totalPages - 1;
 }
+document.getElementById("online-prev").onclick = () => { onlinePage--; renderOnlineList(); };
+document.getElementById("online-next").onclick = () => { onlinePage++; renderOnlineList(); };
 
 // ---- Charts (inline SVG, dataviz-skill mark spec: 2px lines, legend, hover tooltip) ----
 function renderLineChart(containerId, data) {

@@ -326,7 +326,10 @@ def account_list_menu(chat_id, proto, action, page=0):
 
 # ===================== Handlers =====================
 
-def handle_online(chat_id):
+ONLINE_PAGE_SIZE = 5
+
+
+def handle_online(chat_id, page=0):
     out, rc = run_script("online.sh", timeout=30)
     try:
         sessions = json.loads(out)
@@ -338,21 +341,33 @@ def handle_online(chat_id):
     online.sort(key=lambda s: s.get("last_seen_secs_ago", 0))
     total_devices = sum(s.get("ip_count", 0) for s in online)
 
+    total_pages = max(1, (len(online) + ONLINE_PAGE_SIZE - 1) // ONLINE_PAGE_SIZE)
+    page = max(0, min(page, total_pages - 1))
+    chunk = online[page * ONLINE_PAGE_SIZE:(page + 1) * ONLINE_PAGE_SIZE]
+
     lines = [
         "📡 <b>Online Sekarang</b>",
         "━━━━━━━━━━━━━━━━━━",
         f"👥 {len(online)} akun aktif · 📱 <b>{total_devices} device</b> total",
+        f"Halaman {page+1}/{total_pages}",
         "━━━━━━━━━━━━━━━━━━",
     ]
-    if not online:
+    if not chunk:
         lines.append("Tidak ada yang online sekarang.")
-    for s in online:
+    for s in chunk:
         loc = f" ({s.get('city') or '?'} · {s.get('isp') or '?'})" if s.get("city") or s.get("isp") else ""
         lines.append(
             f"[{s['proto']}] <code>{s['user']}</code> — {s.get('ip_count', 0)} device, "
             f"{s.get('last_seen_secs_ago', 0)}s lalu{loc}"
         )
-    send_message(chat_id, "\n".join(lines), BACK_BTN)
+
+    nav = []
+    if page > 0:
+        nav.append({"text": "⬅️ Prev", "callback_data": f"onlpage_{page-1}"})
+    if page < total_pages - 1:
+        nav.append({"text": "Next ➡️", "callback_data": f"onlpage_{page+1}"})
+    keyboard = ([nav] if nav else []) + BACK_BTN
+    send_message(chat_id, "\n".join(lines), keyboard)
 
 
 def handle_status(chat_id):
@@ -713,6 +728,8 @@ def main():
                     handle_accounts(chat_id)
                 elif data == "online_now":
                     handle_online(chat_id)
+                elif data.startswith("onlpage_"):
+                    handle_online(chat_id, page=int(data.split("_", 1)[1]))
                 elif data.startswith("accpage_"):
                     handle_accounts(chat_id, page=int(data.split("_", 1)[1]))
                 elif data == "trial_vmess":
