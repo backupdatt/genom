@@ -398,6 +398,21 @@ Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2026-10-20]
 
+#### ✨ Added — Custom nama akun di web dashboard & Telegram bot
+Ketemu pas user nanya kenapa akun bikinan CLI (`menu/m-vmess.sh` dkk,
+lewat SSH) bisa custom nama (`rizal`, `andrew`, dst) tapi akun bikinan
+web/bot (`TOOLS/bot/account.sh`) selalu random (`Vmess-XXXXX`) —
+ternyata emang dua implementasi "create account" yang beda, gak
+pernah disamain.
+- `account.sh create` sekarang terima argumen ke-6 (nama) opsional.
+  Kosong = tetap random kayak sebelumnya. Diisi = validasi format
+  (`^[a-zA-Z0-9_.-]+$`, sama persis kayak validasi di CLI asli) +
+  cek duplikat (`USER_EXISTS` kalau nama udah dipakai).
+- **Web dashboard**: modal "Buat Akun Baru" nambah field teks nama
+  (placeholder "kosongin = random").
+- **Telegram bot**: setelah pilih limit IP, muncul pilihan "🎲 Random"
+  atau "✏️ Custom Nama" sebelum akun dibuat.
+
 #### ✨ Added — Lokasi/ISP per-akun (Online Now & Info Akun)
 - `TOOLS/bot/lib-ipinfo.sh` baru: helper `ipinfo_lookup()` bareng,
   dipakai `online.sh` dan `account.sh` (action `info`), dengan cache
