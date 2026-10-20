@@ -458,6 +458,45 @@ Stunnel 8443/8880 · VMess/VLess/Trojan/SS WS TLS 443 · gRPC 443 · WS non-TLS 
     </div>
   </div>
 
+  <!-- Modal: renew -->
+  <div id="modal-renew" class="modal-overlay hidden">
+    <div class="modal-box space-y-3">
+      <h3>Renew Akun</h3>
+      <div style="font-size:13px;color:var(--muted);">User: <code id="renew-user-label"></code></div>
+      <select id="renew-days" class="field">
+        <option value="7">7 Hari</option>
+        <option value="30" selected>30 Hari</option>
+        <option value="90">90 Hari</option>
+      </select>
+      <div class="btn-row" style="margin-top:4px;">
+        <button id="renew-cancel" class="btn btn-ghost" style="flex:1;">Batal</button>
+        <button id="renew-submit" class="btn btn-primary" style="flex:1;">Renew</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: limit -->
+  <div id="modal-limit" class="modal-overlay hidden">
+    <div class="modal-box space-y-3">
+      <h3>Atur Limit Akun</h3>
+      <div style="font-size:13px;color:var(--muted);">User: <code id="limit-user-label"></code></div>
+      <select id="limit-quota" class="field">
+        <option value="0">Unlimited Quota</option>
+        <option value="50">50 GB</option>
+        <option value="100">100 GB</option>
+      </select>
+      <select id="limit-iplim" class="field">
+        <option value="1">1 IP</option>
+        <option value="2">2 IP</option>
+        <option value="0">Unlimited IP</option>
+      </select>
+      <div class="btn-row" style="margin-top:4px;">
+        <button id="limit-cancel" class="btn btn-ghost" style="flex:1;">Batal</button>
+        <button id="limit-submit" class="btn btn-primary" style="flex:1;">Simpan</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 const API = "/dashboard/api";
 let currentProto = "vmess";
@@ -694,24 +733,39 @@ function formatLinks(r) {
   `).join("");
 }
 
-async function doRenew(user) {
-  const days = prompt("Tambah berapa hari?", "30");
-  if (!days) return;
-  const r = await api("POST", "/accounts/renew", { proto: currentProto, user, extra_days: parseInt(days) });
+let renewTarget = null;
+function doRenew(user) {
+  renewTarget = user;
+  document.getElementById("renew-user-label").textContent = user;
+  document.getElementById("modal-renew").classList.remove("hidden");
+}
+document.getElementById("renew-cancel").onclick = () => document.getElementById("modal-renew").classList.add("hidden");
+document.getElementById("renew-submit").onclick = async () => {
+  const days = parseInt(document.getElementById("renew-days").value);
+  const user = renewTarget;
+  document.getElementById("modal-renew").classList.add("hidden");
+  const r = await api("POST", "/accounts/renew", { proto: currentProto, user, extra_days: days });
   if (!r.ok) return toast("Gagal renew: " + r.error, false);
   toast(`${user} diperpanjang sampai ${r.NEW_EXP}`);
   loadAccounts();
-}
+};
 
-async function doLimit(user) {
-  const quota = prompt("Quota GB (0 = unlimited)?", "0");
-  if (quota === null) return;
-  const iplim = prompt("Limit IP/device (0 = unlimited)?", "1");
-  if (iplim === null) return;
-  const r = await api("POST", "/accounts/limit", { proto: currentProto, user, quota: parseInt(quota) || 0, iplim: parseInt(iplim) || 0 });
+let limitTarget = null;
+function doLimit(user) {
+  limitTarget = user;
+  document.getElementById("limit-user-label").textContent = user;
+  document.getElementById("modal-limit").classList.remove("hidden");
+}
+document.getElementById("limit-cancel").onclick = () => document.getElementById("modal-limit").classList.add("hidden");
+document.getElementById("limit-submit").onclick = async () => {
+  const quota = parseInt(document.getElementById("limit-quota").value);
+  const iplim = parseInt(document.getElementById("limit-iplim").value);
+  const user = limitTarget;
+  document.getElementById("modal-limit").classList.add("hidden");
+  const r = await api("POST", "/accounts/limit", { proto: currentProto, user, quota, iplim });
   if (!r.ok) return toast("Gagal atur limit: " + r.error, false);
   toast(`${user}: quota ${r.QUOTA === "0" ? "unlimited" : r.QUOTA + "GB"}, IP ${r.IPLIM === "0" ? "unlimited" : r.IPLIM}`);
-}
+};
 
 async function doDelete(user) {
   if (!confirm(`Hapus akun ${user}?`)) return;
