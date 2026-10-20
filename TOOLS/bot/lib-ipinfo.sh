@@ -38,8 +38,8 @@ ipinfo_lookup() {
 
   local resp city org
   resp=$(curl -sS --max-time 4 "https://ipinfo.io/${ip}?token=${token}" 2>/dev/null)
-  city=$(echo "$resp" | grep -oP '"city":\s*"\K[^"]+')
-  org=$(echo "$resp" | grep -oP '"org":\s*"\K[^"]+')
+  city=$(echo "$resp" | grep -oP '"city":\s*"\K(?:[^"\\]|\\.)*' | sed 's/\\"/"/g')
+  org=$(echo "$resp" | grep -oP '"org":\s*"\K(?:[^"\\]|\\.)*' | sed 's/\\"/"/g')
 
   { grep -v "^${ip}|" "$IPINFO_CACHE" 2>/dev/null; echo "${ip}|${now}|${city}|${org}"; } > "${IPINFO_CACHE}.tmp" \
     && mv "${IPINFO_CACHE}.tmp" "$IPINFO_CACHE"

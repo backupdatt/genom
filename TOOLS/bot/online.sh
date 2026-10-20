@@ -15,6 +15,10 @@ get_proto_users() {
   grep -E "^$1 " "$CONFIG" 2>/dev/null | awk '{print $2}' | sort -u
 }
 
+json_escape() {
+  sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' <<< "$1"
+}
+
 first=1
 echo -n "["
 for proto_mark in "#vmg:vmess" "#vlg:vless" "#trg:trojan"; do
@@ -34,6 +38,7 @@ for proto_mark in "#vmg:vmess" "#vlg:vless" "#trg:trojan"; do
         | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | grep -v '^127\.0\.0\.1$' | sort -u | grep -c . || true)
     last_ip=$(echo "$last_line" | awk '{print $4}' | cut -d: -f1)
     IFS='|' read -r city isp <<< "$(ipinfo_lookup "$last_ip")"
+    city=$(json_escape "$city"); isp=$(json_escape "$isp")
     [ "$first" -eq 0 ] && echo -n ","
     first=0
     echo -n "{\"proto\":\"${proto}\",\"user\":\"${user}\",\"online\":${online},\"last_seen_secs_ago\":${diff},\"recent_hits\":${hits},\"ip_count\":${ip_count},\"last_ip\":\"${last_ip}\",\"city\":\"${city}\",\"isp\":\"${isp}\"}"
