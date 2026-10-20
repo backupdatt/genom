@@ -398,6 +398,28 @@ Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2026-10-20]
 
+#### ✨ Added (lanjutan — IP-limit jadi enforcement nyata, bukan notif doang)
+- **Blokir beneran, bukan cuma notif** — `iplimit-daemon.py` sekarang
+  aktif firewall IP yang kelebihan limit (10 menit), bukan cuma kirim
+  notif Telegram. Yang diblokir **device terbaru** (yang bikin lewat
+  limit) — device/IP pertama yang udah konek dari awal gak keganggu.
+  Keputusan ini diambil sadar sama user (2026-10-20) meski ada trade-off
+  CGNAT di bawah.
+- **Pakai `ipset`, bukan insert `iptables` satu-satu** — satu ipset
+  (`hash:ip`) dengan native per-entry timeout + 1 rule iptables statis
+  per port (80/443/8080) yang reference ke situ. Block/unblock jadi
+  O(1), gak numpuk rule, dan expiry di-handle kernel (bukan timer
+  Python) — lebih optimal dibanding pendekatan `iptables -I` naive.
+- **Safety-check CGNAT** — sebelum blokir, dicek dulu: IP itu dipakai
+  bareng sama akun **lain** juga gak dalam window yang sama? Kalau iya,
+  itu sinyal kuat IP tersebut shared (provider mobile Indonesia banyak
+  pakai Carrier-Grade NAT, ratusan pelanggan beda bisa 1 IP publik) —
+  **skip blokir, notif doang** biar gak kena pelanggan lain yang gak
+  salah apa-apa. Baru blokir kalau IP itu murni dipakai 1 akun doang.
+- `ipset` + `modprobe ip_set`/`ip_set_hash_ip` ditambahin ke
+  `SYSTEM/ssh-vpn.sh` biar instalasi VPS baru otomatis siap tanpa perlu
+  install manual lagi.
+
 #### ✨ Added (lanjutan — Realtime IP-limit, Custom input, Trial lengkap)
 - **Deteksi multi-login jadi realtime** — sebelumnya `iplimit-check.sh`
   jalan via cron tiap 2 menit (polling). Diganti `iplimit-daemon.py`,
