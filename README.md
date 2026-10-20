@@ -398,6 +398,18 @@ Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2026-10-20]
 
+#### ✨ Added — Lokasi/ISP server pakai token ipinfo.io asli
+- `menu/menu.sh` punya baris `IPINFO_TOKEN` yang tadinya cuma placeholder
+  contoh (`"Abc12345"`) — diganti token asli (daftar gratis di
+  ipinfo.io) biar info lokasi/ISP VPS di menu CLI nampil akurat, bukan
+  gagal diam-diam.
+- Info lokasi/ISP yang sama diteruskan ke **web dashboard** dan **bot
+  Telegram**, lewat `TOOLS/bot/status.sh` (sumber data bareng buat bot
+  & webapi) — `status.sh` baca token itu langsung dari `/usr/bin/menu`
+  (gak duplikat token di file lain), query `ipinfo.io`, keluarin field
+  `CITY`/`ISP`. Dashboard nampilin kartu "Lokasi / ISP" baru (muncul
+  cuma kalau datanya ada), status Telegram nambah baris `📍 Lokasi`.
+
 #### ⚠️ Dicoba lalu di-revert — IP-limit active blocking
 Sempat dicoba upgrade `iplimit-daemon.py` dari notify-only jadi **aktif
 blokir** IP yang kelebihan limit (pakai `ipset`, auto-expire 10 menit,
