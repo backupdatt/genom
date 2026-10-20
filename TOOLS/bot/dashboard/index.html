@@ -116,6 +116,7 @@ nav.sidebar-nav { flex: 1; padding: 6px 12px; display: flex; flex-direction: col
 .main { flex: 1; padding: 28px 32px; max-height: 100vh; overflow-y: auto; }
 .page-head {
   display: flex; align-items: baseline; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px;
   margin-bottom: 20px;
 }
 .page-head h1 {
@@ -154,6 +155,7 @@ section.page { display: flex; flex-direction: column; gap: 16px; }
 .svc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 8px; }
 .svc-row {
   display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 4px 12px;
   background: var(--surface-2); border-radius: 10px; padding: 9px 13px; font-size: 13px;
 }
 .dot { width: 8px; height: 8px; border-radius: 50%; }
@@ -194,7 +196,7 @@ section.page { display: flex; flex-direction: column; gap: 16px; }
 }
 
 /* ---------- Tabs ---------- */
-.tabs { display: flex; gap: 6px; }
+.tabs { display: flex; gap: 6px; overflow-x: auto; }
 .tab {
   all: unset; cursor: pointer; padding: 8px 14px; border-radius: 9px;
   font-size: 13px; font-weight: 600; color: var(--muted);
@@ -204,7 +206,7 @@ section.page { display: flex; flex-direction: column; gap: 16px; }
 .tab.active { background: var(--signal-dim); color: var(--signal); border-color: rgba(61,220,151,.3); }
 
 /* ---------- Table ---------- */
-.table-wrap { overflow: hidden; }
+.table-wrap { overflow-x: auto; }
 table { width: 100%; font-size: 13px; border-collapse: collapse; }
 thead { background: var(--surface-2); }
 th { text-align: left; padding: 10px 14px; color: var(--muted-2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
@@ -231,10 +233,11 @@ tr.empty-row td { text-align: center; padding: 28px; color: var(--muted-2); }
 }
 .modal-box {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 20px; width: 320px; display: flex; flex-direction: column; gap: 10px;
+  padding: 20px; width: min(320px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 10px;
   box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  max-height: calc(100vh - 32px); overflow-y: auto;
 }
-.modal-box.wide { width: 400px; }
+.modal-box.wide { width: min(400px, calc(100vw - 32px)); }
 .modal-box h3 { margin: 0 0 2px; font-size: 15px; }
 
 /* ---------- Toast ---------- */
@@ -269,14 +272,59 @@ pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--mut
 /* ---------- Pagination ---------- */
 .table-foot {
   display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px;
   padding: 10px 14px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted);
 }
 .table-foot select { background: var(--surface-2); border: 1px solid var(--border); color: var(--text); border-radius: 7px; padding: 4px 7px; font-size: 12px; }
+
+/* ---------- Mobile topbar + drawer ---------- */
+.mobile-topbar {
+  display: none;
+  position: sticky; top: 0; z-index: 30;
+  align-items: center; gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #0c1a26, #0a1420);
+  border-bottom: 1px solid var(--border);
+}
+.hamburger {
+  all: unset; cursor: pointer;
+  width: 34px; height: 34px; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  border-radius: 9px; border: 1px solid var(--border);
+}
+.hamburger span { width: 16px; height: 2px; background: var(--text); border-radius: 2px; }
+.sidebar-backdrop {
+  display: none;
+  position: fixed; inset: 0; background: rgba(5,10,15,.6); z-index: 39;
+}
+.sidebar-backdrop.show { display: block; }
+
+@media (max-width: 860px) {
+  body { display: block; }
+  .mobile-topbar { display: flex; }
+  .sidebar {
+    position: fixed; inset: 0 auto 0 0; z-index: 40;
+    width: min(260px, 82vw);
+    transform: translateX(-100%);
+    transition: transform .2s ease;
+    box-shadow: 0 0 40px rgba(0,0,0,.5);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .main { padding: 16px; max-height: none; }
+  .acc-grid { grid-template-columns: repeat(auto-fit, minmax(96px,1fr)); }
+  .modal-box { width: calc(100vw - 32px); }
+}
 </style>
 </head>
 <body>
 
-  <aside class="sidebar">
+  <div class="mobile-topbar">
+    <button class="hamburger" id="sidebar-toggle" aria-label="Buka menu"><span></span><span></span><span></span></button>
+    <div class="brand" style="padding:0;"><span class="brand-mark"></span>BlackMagic</div>
+  </div>
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+  <aside class="sidebar" id="sidebar">
     <div class="brand"><span class="brand-mark"></span>BlackMagic</div>
     <nav class="sidebar-nav" id="nav">
       <button data-page="dashboard" class="nav-item"><span class="nav-icon">◆</span>Dashboard</button>
@@ -545,7 +593,19 @@ function showPage(name) {
   if (name === "logs") loadLogTabs();
 }
 
-document.querySelectorAll(".nav-item").forEach(b => b.onclick = () => showPage(b.dataset.page));
+document.querySelectorAll(".nav-item").forEach(b => b.onclick = () => { showPage(b.dataset.page); closeSidebar(); });
+
+// ---- Mobile sidebar drawer ----
+function openSidebar() {
+  document.getElementById("sidebar").classList.add("open");
+  document.getElementById("sidebar-backdrop").classList.add("show");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("sidebar-backdrop").classList.remove("show");
+}
+document.getElementById("sidebar-toggle").onclick = openSidebar;
+document.getElementById("sidebar-backdrop").onclick = closeSidebar;
 
 // ---- Dashboard ----
 async function loadDashboard() {
