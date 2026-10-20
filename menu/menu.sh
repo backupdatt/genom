@@ -107,7 +107,7 @@ if ! command -v jq &>/dev/null; then
 fi
 
 # IP Information Setup
-IPINFO_TOKEN="Abc12345"  # Ganti dengan token Anda
+IPINFO_TOKEN="6627a21bafe8fc"
 
 # System Information
 get_sys_info() {
