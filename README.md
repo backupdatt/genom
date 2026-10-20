@@ -398,6 +398,32 @@ Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2026-10-20]
 
+#### ✨ Added — Lokasi/ISP per-akun (Online Now & Info Akun)
+- `TOOLS/bot/lib-ipinfo.sh` baru: helper `ipinfo_lookup()` bareng,
+  dipakai `online.sh` dan `account.sh` (action `info`), dengan cache
+  on-disk per-IP (TTL 1 jam) biar gak boros kuota lookup ipinfo.io.
+- **Online Now** (web dashboard) sekarang nunjukin Lokasi/ISP dari IP
+  terakhir tiap user yang aktif.
+- **Info Akun** (web + Telegram bot) nambah baris Last IP + Lokasi/ISP
+  dari aktivitas terakhir akun itu.
+
+#### 🐛 Fixed — JSON rusak & cache ipinfo numpuk tanpa batas
+- Nama ISP yang punya tanda kutip di dalamnya (institusi Rusia,
+  contoh `Federal State Institution ... "Peoples Friendship
+  University..."`) bikin regex ekstraksi city/org di
+  `lib-ipinfo.sh` berhenti di tengah dan JSON output `online.sh`
+  jadi invalid — akibatnya dashboard "Online Sekarang" keliatan
+  kosong padahal ada user aktif. Diperbaiki regex-nya (handle
+  escaped quote) + ditambah JSON-escaping sebelum di-embed.
+- Cache `lib-ipinfo.sh` sebelumnya cuma dedupe per-IP, nggak pernah
+  expire entry lama — bisa numpuk selamanya karena CGNAT bikin 1
+  device ganti-ganti IP terus. Sekarang di-prune otomatis (buang
+  entry yang lebih tua dari TTL) tiap kali nulis cache.
+- `online.sh` kadang nangkep teks sampah (misal literal `"tcp"`)
+  sebagai `last_ip` kalau format baris access.log beda dari biasanya
+  — field itu belum divalidasi formatnya kayak `ip_count` yang udah
+  ada validasi IPv4. Ditambahin validasi yang sama.
+
 #### 🐛 Fixed — RAM numpuk/habis dari CLI menu (bash process leak)
 Ketemu pas RAM VPS keliatan naik terus tanpa henti: hampir **5000
 proses `/bin/bash` numpuk** dalam 1 sesi SSH yang dibiarkan kebuka
