@@ -396,6 +396,27 @@ pihak ketiga).
 
 Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
+### [2026-10-21]
+
+#### ✨ Added — Dashboard responsive di semua device
+Dashboard sebelumnya cuma punya `<meta viewport>` doang — sidebar
+236px fixed + layout desktop-only, belum dites beneran di HP. Gak
+pakai framework CSS (masih custom design system dari sesi sebelumnya),
+cuma ditambah breakpoint & perilaku adaptif:
+- Sidebar jadi drawer off-canvas di bawah 860px, dibuka lewat tombol
+  hamburger di topbar mobile baru, nutup otomatis pas tap backdrop
+  atau pindah halaman.
+- `.table-wrap` ternyata pakai `overflow: hidden` (bukan `overflow-x:
+  auto`) — table akun sebenarnya NGGAK bisa di-scroll di layar
+  sempit sejak awal, baru ketauan & dibenerin sekarang.
+- Modal dibatasi `min(Npx, 100vw-32px)` + max-height+scroll, jadi
+  gak overflow di HP kecil atau layar pendek.
+- `page-head`, `svc-row` (termasuk baris Online Now), `table-foot`
+  ditambah `flex-wrap` biar teks panjang (lokasi/ISP, dll) gak
+  kepotong di layar sempit.
+- Grid ringkasan akun (VMess/VLess/Trojan) drop dari fixed 3 kolom
+  jadi auto-fit di bawah 860px.
+
 ### [2026-10-20]
 
 #### 🐛 Fixed — Process-leak CLI menu, ronde 2 (ternyata belum tuntas)
