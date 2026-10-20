@@ -3,111 +3,365 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BlackMagic VPN Monitor</title>
+<title>BlackMagic VPN Panel</title>
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
 <style>
-  :root {
-    --bg: #0b0f14;
-    --card: #141a22;
-    --border: #1f2730;
-    --text: #e6edf3;
-    --muted: #8b949e;
-    --green: #3fb950;
-    --red: #f85149;
-    --yellow: #d29922;
-    --accent: #58a6ff;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; padding: 16px;
-    background: var(--bg); color: var(--text);
-    font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
-  }
-  h1 { font-size: 18px; margin: 0 0 4px; }
-  .sub { color: var(--muted); font-size: 12px; margin-bottom: 16px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px; }
-  .card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 10px; padding: 12px 14px;
-  }
-  .card .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
-  .card .value { font-size: 20px; font-weight: 600; margin-top: 4px; }
-  .section { margin-bottom: 16px; }
-  .section h2 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 8px; }
-  .svc-row, .acc-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 8px 12px; background: var(--card); border: 1px solid var(--border);
-    border-radius: 8px; margin-bottom: 6px; font-size: 14px;
-  }
-  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-  .dot.on { background: var(--green); }
-  .dot.off { background: var(--red); }
-  .err { color: var(--red); font-size: 13px; }
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) {
-      --bg: #ffffff; --card: #f6f8fa; --border: #d0d7de; --text: #1f2328; --muted: #656d76;
-    }
-  }
+  body { background: #0b0f14; }
+  .card { background: #141a22; border: 1px solid #1f2730; }
+  .btn { @apply px-3 py-2 rounded-lg text-sm font-medium transition; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: #2a333d; border-radius: 3px; }
 </style>
 </head>
-<body>
-  <h1>🔮 BlackMagic VPN Monitor</h1>
-  <div class="sub" id="meta">Memuat...</div>
+<body class="text-slate-200 min-h-screen flex">
 
-  <div class="grid" id="stats"></div>
+  <!-- Sidebar -->
+  <aside class="w-56 shrink-0 bg-[#0e1319] border-r border-[#1f2730] flex flex-col">
+    <div class="px-4 py-5 text-lg font-bold text-white">🔮 BlackMagic</div>
+    <nav class="flex-1 px-2 space-y-1" id="nav">
+      <button data-page="dashboard" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[#1b2330] flex items-center gap-2">📊 Dashboard</button>
+      <button data-page="akun" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[#1b2330] flex items-center gap-2">👥 Akun</button>
+      <button data-page="trial" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[#1b2330] flex items-center gap-2">🎁 Trial</button>
+      <button data-page="backup" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[#1b2330] flex items-center gap-2">💾 Backup</button>
+      <button data-page="tools" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[#1b2330] flex items-center gap-2">🛠️ Server Tools</button>
+    </nav>
+    <div class="px-4 py-3 text-xs text-slate-500 border-t border-[#1f2730]" id="footer-domain">—</div>
+  </aside>
 
-  <div class="section">
-    <h2>Layanan</h2>
-    <div id="services"></div>
+  <!-- Main -->
+  <main class="flex-1 p-6 overflow-y-auto max-h-screen">
+    <div id="toast" class="hidden fixed top-4 right-4 px-4 py-2 rounded-lg text-sm shadow-lg z-50"></div>
+
+    <!-- Dashboard -->
+    <section id="page-dashboard" class="page space-y-4">
+      <h1 class="text-xl font-bold text-white">Dashboard</h1>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="stat-cards"></div>
+      <div class="card rounded-xl p-4">
+        <h2 class="text-sm uppercase text-slate-400 mb-3">Status Layanan</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-2" id="svc-grid"></div>
+      </div>
+      <div class="card rounded-xl p-4">
+        <h2 class="text-sm uppercase text-slate-400 mb-3">Ringkasan Akun</h2>
+        <div class="grid grid-cols-3 gap-3" id="acc-summary"></div>
+      </div>
+    </section>
+
+    <!-- Akun -->
+    <section id="page-akun" class="page hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <h1 class="text-xl font-bold text-white">Akun</h1>
+        <button id="btn-new-account" class="btn bg-blue-600 hover:bg-blue-500 text-white">+ Buat Akun</button>
+      </div>
+      <div class="flex gap-2" id="akun-tabs">
+        <button data-proto="vmess" class="proto-tab btn bg-[#1b2330] text-slate-200">VMess</button>
+        <button data-proto="vless" class="proto-tab btn bg-[#1b2330] text-slate-200">VLess</button>
+        <button data-proto="trojan" class="proto-tab btn bg-[#1b2330] text-slate-200">Trojan</button>
+      </div>
+      <div class="card rounded-xl overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-[#0e1319] text-slate-400">
+            <tr><th class="text-left px-4 py-2">User</th><th class="text-left px-4 py-2">Expired</th><th class="text-left px-4 py-2">Status</th><th class="text-right px-4 py-2">Aksi</th></tr>
+          </thead>
+          <tbody id="akun-table"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Trial -->
+    <section id="page-trial" class="page hidden space-y-4">
+      <h1 class="text-xl font-bold text-white">Trial Akun</h1>
+      <div class="grid md:grid-cols-3 gap-4" id="trial-cards"></div>
+      <div id="trial-result" class="card rounded-xl p-4 hidden"></div>
+    </section>
+
+    <!-- Backup -->
+    <section id="page-backup" class="page hidden space-y-4">
+      <h1 class="text-xl font-bold text-white">Backup</h1>
+      <div class="card rounded-xl p-4 flex items-center justify-between">
+        <div>
+          <div class="text-sm text-slate-400">Backup manual (zip config → upload Drive → kirim ke Telegram)</div>
+        </div>
+        <button id="btn-backup-now" class="btn bg-blue-600 hover:bg-blue-500 text-white">Backup Sekarang</button>
+      </div>
+      <div class="card rounded-xl p-4">
+        <div class="text-sm text-slate-400 mb-3">Jadwal Auto-Backup — status: <span id="backup-status" class="font-semibold text-white">-</span></div>
+        <div class="flex gap-2">
+          <button data-mode="harian" class="mode-btn btn bg-[#1b2330] text-slate-200">Harian (03:00)</button>
+          <button data-mode="mingguan" class="mode-btn btn bg-[#1b2330] text-slate-200">Mingguan (Minggu 03:00)</button>
+          <button data-mode="off" class="mode-btn btn bg-[#1b2330] text-slate-200">Matikan</button>
+        </div>
+      </div>
+      <div id="backup-result" class="card rounded-xl p-4 hidden text-sm"></div>
+    </section>
+
+    <!-- Server Tools -->
+    <section id="page-tools" class="page hidden space-y-4">
+      <h1 class="text-xl font-bold text-white">Server Tools</h1>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="card rounded-xl p-4">
+          <div class="text-sm text-slate-400 mb-3">Restart layanan</div>
+          <div class="flex gap-2">
+            <button id="btn-restart-xray" class="btn bg-[#1b2330] text-slate-200">Restart Xray</button>
+            <button id="btn-restart-all" class="btn bg-[#1b2330] text-slate-200">Restart Semua</button>
+          </div>
+        </div>
+        <div class="card rounded-xl p-4">
+          <div class="text-sm text-slate-400 mb-3">Reboot VPS</div>
+          <button id="btn-reboot" class="btn bg-red-600 hover:bg-red-500 text-white">♻️ Reboot Sekarang</button>
+        </div>
+      </div>
+      <div class="card rounded-xl p-4">
+        <div class="text-sm text-slate-400 mb-2">Port Aktif</div>
+        <pre class="text-xs text-slate-300 whitespace-pre-wrap">OpenVPN 2086 · SSH-WS Stunnel 701 · SSH SSL WS 443 · SSH WS 80/443
+Stunnel 8443/8880 · VMess/VLess/Trojan/SS WS TLS 443 · gRPC 443 · WS non-TLS 80</pre>
+      </div>
+      <div id="tools-result" class="card rounded-xl p-4 hidden text-sm"></div>
+    </section>
+  </main>
+
+  <!-- Modal: new account -->
+  <div id="modal-newacc" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-40">
+    <div class="card rounded-xl p-5 w-80 space-y-3">
+      <h3 class="font-semibold text-white">Buat Akun Baru</h3>
+      <select id="na-proto" class="w-full bg-[#0e1319] border border-[#1f2730] rounded-lg px-3 py-2 text-sm">
+        <option value="vmess">VMess</option><option value="vless">VLess</option><option value="trojan">Trojan</option>
+      </select>
+      <select id="na-days" class="w-full bg-[#0e1319] border border-[#1f2730] rounded-lg px-3 py-2 text-sm">
+        <option value="7">7 Hari</option><option value="30" selected>30 Hari</option><option value="90">90 Hari</option>
+      </select>
+      <select id="na-quota" class="w-full bg-[#0e1319] border border-[#1f2730] rounded-lg px-3 py-2 text-sm">
+        <option value="0">Unlimited Quota</option><option value="50">50 GB</option><option value="100">100 GB</option>
+      </select>
+      <select id="na-iplim" class="w-full bg-[#0e1319] border border-[#1f2730] rounded-lg px-3 py-2 text-sm">
+        <option value="1">1 IP</option><option value="2">2 IP</option><option value="0">Unlimited IP</option>
+      </select>
+      <div class="flex gap-2 pt-1">
+        <button id="na-cancel" class="btn bg-[#1b2330] text-slate-200 flex-1">Batal</button>
+        <button id="na-submit" class="btn bg-blue-600 hover:bg-blue-500 text-white flex-1">Buat</button>
+      </div>
+    </div>
   </div>
 
-  <div class="section">
-    <h2>Akun Aktif</h2>
-    <div id="accounts"></div>
+  <!-- Modal: account info/result -->
+  <div id="modal-info" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-40">
+    <div class="card rounded-xl p-5 w-96 space-y-2">
+      <h3 class="font-semibold text-white mb-1">Detail Akun</h3>
+      <div id="info-body" class="text-sm space-y-1"></div>
+      <button id="info-close" class="btn bg-[#1b2330] text-slate-200 w-full mt-2">Tutup</button>
+    </div>
   </div>
 
 <script>
-const SVC_LABEL = {
-  xray: "Xray", nginx: "Nginx", dropbear: "Dropbear",
-  fail2ban: "Fail2ban", ws_stunnel: "SSH-WS Stunnel", blackmagic_bot: "Telegram Bot"
-};
+const API = "/dashboard/api";
+let currentProto = "vmess";
 
-function render(d) {
-  document.getElementById("meta").textContent =
-    `${d.domain} (${d.ip}) — update terakhir ${d.generated_at}`;
+function toast(msg, ok = true) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-sm shadow-lg z-50 ${ok ? "bg-emerald-600" : "bg-red-600"} text-white`;
+  setTimeout(() => el.classList.add("hidden"), 3500);
+}
 
-  const ramPct = d.ram_total_mb ? Math.round((d.ram_used_mb / d.ram_total_mb) * 100) : 0;
-  document.getElementById("stats").innerHTML = `
-    <div class="card"><div class="label">Uptime</div><div class="value">${d.uptime || "-"}</div></div>
-    <div class="card"><div class="label">RAM</div><div class="value">${d.ram_used_mb}/${d.ram_total_mb} MB (${ramPct}%)</div></div>
-    <div class="card"><div class="label">CPU</div><div class="value">${d.cpu_percent}%</div></div>
-    <div class="card"><div class="label">Disk</div><div class="value">${d.disk}</div></div>
+async function api(method, path, body) {
+  const res = await fetch(API + path, {
+    method, headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return res.json();
+}
+
+function showPage(name) {
+  document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
+  document.getElementById("page-" + name).classList.remove("hidden");
+  document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("bg-[#1b2330]", "text-white"));
+  document.querySelector(`.nav-item[data-page="${name}"]`).classList.add("bg-[#1b2330]", "text-white");
+  if (name === "dashboard") loadDashboard();
+  if (name === "akun") loadAccounts();
+  if (name === "trial") loadTrialCards();
+  if (name === "backup") loadBackupStatus();
+}
+
+document.querySelectorAll(".nav-item").forEach(b => b.onclick = () => showPage(b.dataset.page));
+
+// ---- Dashboard ----
+async function loadDashboard() {
+  const s = await api("GET", "/status");
+  document.getElementById("footer-domain").textContent = s.DOMAIN || "-";
+  document.getElementById("stat-cards").innerHTML = `
+    <div class="card rounded-xl p-4"><div class="text-xs text-slate-400 uppercase">Uptime</div><div class="text-lg font-semibold text-white mt-1">${s.UPTIME || "-"}</div></div>
+    <div class="card rounded-xl p-4"><div class="text-xs text-slate-400 uppercase">RAM</div><div class="text-lg font-semibold text-white mt-1">${s.RAM || "-"}</div></div>
+    <div class="card rounded-xl p-4"><div class="text-xs text-slate-400 uppercase">CPU</div><div class="text-lg font-semibold text-white mt-1">${s.CPU || "-"}</div></div>
+    <div class="card rounded-xl p-4"><div class="text-xs text-slate-400 uppercase">Disk</div><div class="text-lg font-semibold text-white mt-1">${s.DISK || "-"}</div></div>
   `;
-
-  const svcHtml = Object.entries(d.services).map(([k, v]) => `
-    <div class="svc-row">
-      <span><span class="dot ${v ? "on" : "off"}"></span>${SVC_LABEL[k] || k}</span>
-      <span>${v ? "ON" : "OFF"}</span>
+  const svc = { XRAY: "Xray", NGINX: "Nginx", DROPBEAR: "Dropbear", FAIL2BAN: "Fail2ban", WS_STUNNEL: "SSH-WS" };
+  document.getElementById("svc-grid").innerHTML = Object.entries(svc).map(([k, label]) => `
+    <div class="flex items-center justify-between px-3 py-2 rounded-lg bg-[#0e1319]">
+      <span>${label}</span>
+      <span class="w-2 h-2 rounded-full ${s[k] === "ON" ? "bg-emerald-500" : "bg-red-500"}"></span>
     </div>
   `).join("");
-  document.getElementById("services").innerHTML = svcHtml;
 
-  const accHtml = Object.entries(d.accounts).map(([k, v]) => `
-    <div class="acc-row"><span>${k.charAt(0).toUpperCase() + k.slice(1)}</span><span>${v} akun</span></div>
+  const a = await api("GET", "/accounts");
+  document.getElementById("acc-summary").innerHTML = `
+    <div class="rounded-lg bg-[#0e1319] p-3 text-center"><div class="text-xs text-slate-400">VMess</div><div class="text-xl font-bold text-white">${a.counts.vmess}</div></div>
+    <div class="rounded-lg bg-[#0e1319] p-3 text-center"><div class="text-xs text-slate-400">VLess</div><div class="text-xl font-bold text-white">${a.counts.vless}</div></div>
+    <div class="rounded-lg bg-[#0e1319] p-3 text-center"><div class="text-xs text-slate-400">Trojan</div><div class="text-xl font-bold text-white">${a.counts.trojan}</div></div>
+  `;
+}
+
+// ---- Akun ----
+document.querySelectorAll(".proto-tab").forEach(b => b.onclick = () => {
+  currentProto = b.dataset.proto;
+  document.querySelectorAll(".proto-tab").forEach(x => x.classList.remove("bg-blue-600", "text-white"));
+  b.classList.add("bg-blue-600", "text-white");
+  renderAkunTable();
+});
+
+let accountsCache = [];
+async function loadAccounts() {
+  const a = await api("GET", "/accounts");
+  accountsCache = a.accounts;
+  document.querySelector('.proto-tab[data-proto="vmess"]').classList.add("bg-blue-600", "text-white");
+  renderAkunTable();
+}
+
+function badge(dl) {
+  if (dl < 0) return `<span class="px-2 py-0.5 rounded bg-red-600/20 text-red-400 text-xs">expired</span>`;
+  if (dl <= 3) return `<span class="px-2 py-0.5 rounded bg-amber-600/20 text-amber-400 text-xs">${dl}d left</span>`;
+  return `<span class="px-2 py-0.5 rounded bg-emerald-600/20 text-emerald-400 text-xs">${dl}d left</span>`;
+}
+
+function renderAkunTable() {
+  const rows = accountsCache.filter(r => r.proto === currentProto);
+  document.getElementById("akun-table").innerHTML = rows.length ? rows.map(r => `
+    <tr class="border-t border-[#1f2730]">
+      <td class="px-4 py-2"><code class="text-xs">${r.user}</code></td>
+      <td class="px-4 py-2 text-slate-400">${r.exp}</td>
+      <td class="px-4 py-2">${badge(r.days_left)}</td>
+      <td class="px-4 py-2 text-right space-x-1">
+        <button class="btn bg-[#1b2330] text-xs" onclick="doInfo('${r.user}')">Info</button>
+        <button class="btn bg-[#1b2330] text-xs" onclick="doRenew('${r.user}')">Renew</button>
+        <button class="btn bg-red-600/80 hover:bg-red-600 text-xs text-white" onclick="doDelete('${r.user}')">Hapus</button>
+      </td>
+    </tr>
+  `).join("") : `<tr><td colspan="4" class="px-4 py-6 text-center text-slate-500">Tidak ada akun ${currentProto}.</td></tr>`;
+}
+
+async function doInfo(user) {
+  const r = await api("POST", "/accounts/info", { proto: currentProto, user });
+  if (!r.ok) return toast("Gagal: " + r.error, false);
+  document.getElementById("info-body").innerHTML = `
+    <div><b>User:</b> <code>${r.USER}</code></div>
+    <div><b>Secret:</b> <code class="break-all">${r.SECRET}</code></div>
+    <div><b>Domain:</b> ${r.DOMAIN}</div>
+    <div><b>Exp:</b> ${r.EXP}</div>
+    <div><b>IP Limit:</b> ${r.IPLIM}</div>
+    <div class="break-all"><b>Link:</b><br><code class="text-xs">${r.LINK1}</code></div>
+  `;
+  document.getElementById("modal-info").classList.remove("hidden");
+}
+
+async function doRenew(user) {
+  const days = prompt("Tambah berapa hari?", "30");
+  if (!days) return;
+  const r = await api("POST", "/accounts/renew", { proto: currentProto, user, extra_days: parseInt(days) });
+  if (!r.ok) return toast("Gagal renew: " + r.error, false);
+  toast(`${user} diperpanjang sampai ${r.NEW_EXP}`);
+  loadAccounts();
+}
+
+async function doDelete(user) {
+  if (!confirm(`Hapus akun ${user}?`)) return;
+  const r = await api("POST", "/accounts/delete", { proto: currentProto, user });
+  if (!r.ok) return toast("Gagal hapus: " + r.error, false);
+  toast(`${user} dihapus`);
+  loadAccounts();
+}
+
+document.getElementById("btn-new-account").onclick = () => document.getElementById("modal-newacc").classList.remove("hidden");
+document.getElementById("na-cancel").onclick = () => document.getElementById("modal-newacc").classList.add("hidden");
+document.getElementById("info-close").onclick = () => document.getElementById("modal-info").classList.add("hidden");
+document.getElementById("na-submit").onclick = async () => {
+  const body = {
+    proto: document.getElementById("na-proto").value,
+    days: parseInt(document.getElementById("na-days").value),
+    quota: parseInt(document.getElementById("na-quota").value),
+    iplim: parseInt(document.getElementById("na-iplim").value),
+  };
+  const r = await api("POST", "/accounts/create", body);
+  document.getElementById("modal-newacc").classList.add("hidden");
+  if (!r.ok) return toast("Gagal: " + r.error, false);
+  toast(`Akun ${r.USER} dibuat`);
+  loadAccounts();
+};
+
+// ---- Trial ----
+const TRIAL_LABEL = { vmess: "VMess", vless: "VLess", trojan: "Trojan" };
+function loadTrialCards() {
+  document.getElementById("trial-cards").innerHTML = Object.keys(TRIAL_LABEL).map(p => `
+    <div class="card rounded-xl p-4 space-y-2">
+      <div class="font-semibold text-white">${TRIAL_LABEL[p]}</div>
+      <select id="trial-dur-${p}" class="w-full bg-[#0e1319] border border-[#1f2730] rounded-lg px-3 py-2 text-sm">
+        <option value="5">5 Menit</option><option value="60">60 Menit</option><option value="1440">1440 Menit (1 Hari)</option>
+      </select>
+      <button class="btn bg-blue-600 hover:bg-blue-500 text-white w-full" onclick="createTrial('${p}')">Buat Trial</button>
+    </div>
   `).join("");
-  document.getElementById("accounts").innerHTML = accHtml;
 }
 
-async function tick() {
-  try {
-    const res = await fetch("data.json?_=" + Date.now(), { cache: "no-store" });
-    render(await res.json());
-  } catch (e) {
-    document.getElementById("meta").innerHTML = `<span class="err">Gagal memuat data: ${e}</span>`;
-  }
+async function createTrial(proto) {
+  const minutes = parseInt(document.getElementById(`trial-dur-${proto}`).value);
+  const r = await api("POST", "/trial", { proto, minutes });
+  const el = document.getElementById("trial-result");
+  el.classList.remove("hidden");
+  if (!r.ok) { el.innerHTML = `<span class="text-red-400">Gagal: ${r.error}</span>`; return; }
+  el.innerHTML = `
+    <div class="font-semibold text-white mb-2">Trial ${TRIAL_LABEL[proto]} dibuat</div>
+    <div class="text-sm space-y-1">
+      <div><b>User:</b> <code>${r.USER}</code></div>
+      <div><b>Domain:</b> ${r.DOMAIN}</div>
+      <div><b>Durasi:</b> ${r.TIMER} menit</div>
+      <div class="break-all"><b>Link:</b><br><code class="text-xs">${r.LINK1}</code></div>
+    </div>`;
 }
 
-tick();
-setInterval(tick, 5000);
+// ---- Backup ----
+async function loadBackupStatus() {
+  const r = await api("GET", "/backup/schedule");
+  document.getElementById("backup-status").textContent = r.schedule;
+}
+document.getElementById("btn-backup-now").onclick = async () => {
+  toast("Memproses backup...");
+  const r = await api("POST", "/backup/now");
+  const el = document.getElementById("backup-result");
+  el.classList.remove("hidden");
+  el.innerHTML = r.ok ? `<span class="text-emerald-400">✅ Backup selesai.</span>` : `<span class="text-red-400">❌ Gagal: ${r.log}</span>`;
+};
+document.querySelectorAll(".mode-btn").forEach(b => b.onclick = async () => {
+  const r = await api("POST", "/backup/schedule", { mode: b.dataset.mode });
+  document.getElementById("backup-status").textContent = r.schedule;
+  toast("Jadwal backup diatur: " + r.schedule);
+});
+
+// ---- Server Tools ----
+document.getElementById("btn-restart-xray").onclick = async () => {
+  const r = await api("POST", "/restart-xray");
+  document.getElementById("tools-result").classList.remove("hidden");
+  document.getElementById("tools-result").innerHTML = r.ok ? "✅ Xray restarted." : "❌ Gagal restart Xray.";
+};
+document.getElementById("btn-restart-all").onclick = async () => {
+  const r = await api("POST", "/restart-all");
+  document.getElementById("tools-result").classList.remove("hidden");
+  document.getElementById("tools-result").innerHTML = Object.entries(r.services || {}).map(([k, v]) => `${k}: ${v}`).join("<br>");
+};
+document.getElementById("btn-reboot").onclick = async () => {
+  if (!confirm("Yakin reboot VPS sekarang?")) return;
+  await api("POST", "/reboot");
+  toast("VPS akan reboot dalam 1 menit...");
+};
+
+// init
+showPage("dashboard");
 </script>
 </body>
 </html>
