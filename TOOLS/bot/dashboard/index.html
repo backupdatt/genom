@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BlackMagic VPN Monitor</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --card: #141a22;
+    --border: #1f2730;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --green: #3fb950;
+    --red: #f85149;
+    --yellow: #d29922;
+    --accent: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 16px;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, system-ui, "Segoe UI", sans-serif;
+  }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 12px; margin-bottom: 16px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px;
+  }
+  .card .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+  .card .value { font-size: 20px; font-weight: 600; margin-top: 4px; }
+  .section { margin-bottom: 16px; }
+  .section h2 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 8px; }
+  .svc-row, .acc-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; margin-bottom: 6px; font-size: 14px;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+  .dot.on { background: var(--green); }
+  .dot.off { background: var(--red); }
+  .err { color: var(--red); font-size: 13px; }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #ffffff; --card: #f6f8fa; --border: #d0d7de; --text: #1f2328; --muted: #656d76;
+    }
+  }
+</style>
+</head>
+<body>
+  <h1>🔮 BlackMagic VPN Monitor</h1>
+  <div class="sub" id="meta">Memuat...</div>
+
+  <div class="grid" id="stats"></div>
+
+  <div class="section">
+    <h2>Layanan</h2>
+    <div id="services"></div>
+  </div>
+
+  <div class="section">
+    <h2>Akun Aktif</h2>
+    <div id="accounts"></div>
+  </div>
+
+<script>
+const SVC_LABEL = {
+  xray: "Xray", nginx: "Nginx", dropbear: "Dropbear",
+  fail2ban: "Fail2ban", ws_stunnel: "SSH-WS Stunnel", blackmagic_bot: "Telegram Bot"
+};
+
+function render(d) {
+  document.getElementById("meta").textContent =
+    `${d.domain} (${d.ip}) — update terakhir ${d.generated_at}`;
+
+  const ramPct = d.ram_total_mb ? Math.round((d.ram_used_mb / d.ram_total_mb) * 100) : 0;
+  document.getElementById("stats").innerHTML = `
+    <div class="card"><div class="label">Uptime</div><div class="value">${d.uptime || "-"}</div></div>
+    <div class="card"><div class="label">RAM</div><div class="value">${d.ram_used_mb}/${d.ram_total_mb} MB (${ramPct}%)</div></div>
+    <div class="card"><div class="label">CPU</div><div class="value">${d.cpu_percent}%</div></div>
+    <div class="card"><div class="label">Disk</div><div class="value">${d.disk}</div></div>
+  `;
+
+  const svcHtml = Object.entries(d.services).map(([k, v]) => `
+    <div class="svc-row">
+      <span><span class="dot ${v ? "on" : "off"}"></span>${SVC_LABEL[k] || k}</span>
+      <span>${v ? "ON" : "OFF"}</span>
+    </div>
+  `).join("");
+  document.getElementById("services").innerHTML = svcHtml;
+
+  const accHtml = Object.entries(d.accounts).map(([k, v]) => `
+    <div class="acc-row"><span>${k.charAt(0).toUpperCase() + k.slice(1)}</span><span>${v} akun</span></div>
+  `).join("");
+  document.getElementById("accounts").innerHTML = accHtml;
+}
+
+async function tick() {
+  try {
+    const res = await fetch("data.json?_=" + Date.now(), { cache: "no-store" });
+    render(await res.json());
+  } catch (e) {
+    document.getElementById("meta").innerHTML = `<span class="err">Gagal memuat data: ${e}</span>`;
+  }
+}
+
+tick();
+setInterval(tick, 5000);
+</script>
+</body>
+</html>
