@@ -344,6 +344,10 @@ pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--mut
     <section id="page-dashboard" class="page">
       <div class="page-head"><div><span class="eyebrow">Ringkasan</span><h1>Dashboard</h1></div></div>
       <div class="stat-grid" id="stat-cards"></div>
+      <div class="panel">
+        <div class="panel-label">Pemakaian Bandwidth (semua akun)</div>
+        <div class="stat-grid" id="bandwidth-cards"></div>
+      </div>
       <div class="panel viz-root">
         <div class="panel-label">Pemakaian — 2 Jam Terakhir</div>
         <div class="chart-legend">
@@ -624,6 +628,14 @@ document.getElementById("sidebar-toggle").onclick = openSidebar;
 document.getElementById("sidebar-backdrop").onclick = closeSidebar;
 
 // ---- Dashboard ----
+function fmtBytes(b) {
+  b = Number(b) || 0;
+  if (b >= 1024 ** 3) return (b / 1024 ** 3).toFixed(2) + " GB";
+  if (b >= 1024 ** 2) return (b / 1024 ** 2).toFixed(1) + " MB";
+  if (b >= 1024) return (b / 1024).toFixed(1) + " KB";
+  return b + " B";
+}
+
 async function loadDashboard() {
   const s = await api("GET", "/status");
   document.getElementById("footer-domain").textContent = s.DOMAIN || "-";
@@ -638,6 +650,13 @@ async function loadDashboard() {
   document.getElementById("svc-grid").innerHTML = Object.entries(svc).map(([k, label]) => `
     <div class="svc-row"><span>${label}</span><span class="dot ${s[k] === "ON" ? "on" : "off"}"></span></div>
   `).join("");
+
+  const u = await api("GET", "/usage");
+  document.getElementById("bandwidth-cards").innerHTML = `
+    <div class="stat-card"><div class="k">Hari Ini</div><div class="v">${fmtBytes(u.TODAY_BYTES)}</div></div>
+    <div class="stat-card"><div class="k">Kemarin</div><div class="v">${fmtBytes(u.YESTERDAY_BYTES)}</div></div>
+    <div class="stat-card"><div class="k">Bulan Ini</div><div class="v">${fmtBytes(u.MONTH_BYTES)}</div></div>
+  `;
 
   const a = await api("GET", "/accounts");
   document.getElementById("acc-summary").innerHTML = `
@@ -832,6 +851,7 @@ async function doInfo(user) {
     <div><b>Exp:</b> ${r.EXP}</div>
     <div><b>IP Limit:</b> ${r.IPLIM}</div>
     ${r.LAST_IP ? `<div><b>Last IP:</b> <code>${r.LAST_IP}</code> (${r.CITY || "?"} · ${r.ISP || "?"})</div>` : ""}
+    <div><b>Pemakaian:</b> ${fmtBytes(r.TODAY_BYTES)} hari ini · ${fmtBytes(r.YESTERDAY_BYTES)} kemarin · ${fmtBytes(r.MONTH_BYTES)} bulan ini</div>
     ${formatLinks(r)}
   `;
   document.getElementById("modal-info").classList.remove("hidden");

@@ -150,6 +150,7 @@ info)
   echo "LAST_IP=${last_ip}"
   echo "CITY=${city}"
   echo "ISP=${isp}"
+  bash "$(dirname "$0")/usage.sh" account "$proto" "$user"
   emit_links "$user" "$secret"
   ;;
 

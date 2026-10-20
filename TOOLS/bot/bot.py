@@ -85,6 +85,17 @@ def parse_kv(output):
     return data
 
 
+def fmt_bytes(b):
+    try:
+        b = float(b)
+    except (TypeError, ValueError):
+        b = 0
+    for unit in ("B", "KB", "MB", "GB"):
+        if b < 1024 or unit == "GB":
+            return f"{b:.2f} {unit}" if unit == "GB" else f"{b:.0f} {unit}"
+        b /= 1024
+
+
 # ===================== Keyboards =====================
 
 MAIN_MENU = [
@@ -373,6 +384,8 @@ def handle_online(chat_id, page=0):
 def handle_status(chat_id):
     out, rc = run_script("status.sh")
     d = parse_kv(out)
+    usage_out, _ = run_script("usage.sh", "server", timeout=30)
+    u = parse_kv(usage_out)
     text = (
         "📊 <b>Status Server</b>\n"
         "━━━━━━━━━━━━━━━━━━\n"
@@ -383,6 +396,10 @@ def handle_status(chat_id):
         f"🧠 RAM       : {d.get('RAM','?')}\n"
         f"⚙️ CPU       : {d.get('CPU','?')}\n"
         f"💽 Disk      : {d.get('DISK','?')}\n"
+        "━━━━━━━━━━━━━━━━━━\n"
+        f"📶 Bandwidth : {fmt_bytes(u.get('TODAY_BYTES'))} hari ini · "
+        f"{fmt_bytes(u.get('YESTERDAY_BYTES'))} kemarin · "
+        f"{fmt_bytes(u.get('MONTH_BYTES'))} bulan ini\n"
         "━━━━━━━━━━━━━━━━━━\n"
         f"Xray      : {'🟢 ON' if d.get('XRAY')=='ON' else '🔴 OFF'}\n"
         f"Nginx     : {'🟢 ON' if d.get('NGINX')=='ON' else '🔴 OFF'}\n"
@@ -564,6 +581,7 @@ def handle_info_account(chat_id, proto, user):
         f"⏳ Exp    : {d.get('EXP','?')}\n"
         f"🔢 IP Limit : {d.get('IPLIM','?')}\n"
         + (f"📍 Last IP  : <code>{d.get('LAST_IP')}</code> ({d.get('CITY') or '?'} · {d.get('ISP') or '?'})\n" if d.get('LAST_IP') else "")
+        + f"📶 Pemakaian : {fmt_bytes(d.get('TODAY_BYTES'))} hari ini · {fmt_bytes(d.get('YESTERDAY_BYTES'))} kemarin · {fmt_bytes(d.get('MONTH_BYTES'))} bulan ini\n"
         + "━━━━━━━━━━━━━━━━━━\n"
         f"🔗 <b>Link ({PROTO_LABEL[proto]})</b>\n\n{format_links(d)}"
     )

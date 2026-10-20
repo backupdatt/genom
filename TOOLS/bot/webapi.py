@@ -86,6 +86,11 @@ def h_status(_req):
     return parse_kv(out)
 
 
+def h_usage(_req):
+    out, _ = run_script("usage.sh", "server", timeout=30)
+    return parse_kv(out)
+
+
 def h_accounts(_req):
     out, _ = run_script("accounts.sh")
     d = parse_kv(out)
@@ -240,6 +245,7 @@ def h_logs_journal(req):
 
 ROUTES = {
     ("GET", "/dashboard/api/status"): h_status,
+    ("GET", "/dashboard/api/usage"): h_usage,
     ("GET", "/dashboard/api/accounts"): h_accounts,
     ("POST", "/dashboard/api/accounts/create"): h_account_create,
     ("POST", "/dashboard/api/accounts/delete"): h_account_delete,
