@@ -398,6 +398,31 @@ Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2026-10-20]
 
+#### 🐛 Fixed — Process-leak CLI menu, ronde 2 (ternyata belum tuntas)
+User nanya ulang "udah beneran aman?" dan jawabannya waktu itu
+**belum** — audit ulang nemu banyak titik bocor lain yang kelewat
+di fix pertama (commit `f6b887e`):
+- `menu.sh` sendiri ternyata forward ke SEMUA submenu (`sshws`,
+  `m-vmess`, `m-vless`, `m-trojan`, `menu-backup`, `cekservice`,
+  `running`, `m-update`, `system`, `online`, `admin`) tanpa `exec` —
+  karena submenu-submenu itu udah `exec` balik ke `menu`, proses
+  `menu.sh` yang lama jadi nunggu selamanya tiap user masuk ke
+  submenu apapun. Ini yang paling parah, kena di SETIAP navigasi.
+- 3 halaman "Cek Login IP" di `m-trojan.sh`/`m-vless.sh`/`m-vmess.sh`
+  manggil ulang nama binary-nya sendiri di baris mandiri (bukan di
+  dalam `case`), kelewat di scan pertama yang cuma nyari pola
+  `case ... ;;`.
+- Ketemu juga 2 dispatcher yang di repo ini cuma ada **tanpa** ekstensi
+  `.sh` (`menu-backup`, `online`) — punya bug identik di semua
+  opsinya, termasuk forward navigation ke backup/restore/atur-backup
+  dan online-vmess/vless/trojan/xray/ceklimit.
+- `system.sh` masih punya 2 titik `clear ; m-theme ;;` yang belum
+  ke-exec dari fix pertama.
+- Semua call yang manggil FUNGSI LOKAL (bukan binary lain) sengaja
+  dibiarkan — dicek satu-satu, aman karena gak fork proses baru.
+- Diverifikasi ulang di VPS: simulasi `exec menu` gak nambah proses
+  numpuk lagi.
+
 #### ✨ Added — Pagination Online Now (5 per halaman)
 List "Online Sekarang" ternyata bisa panjang (10+ akun aktif sekaligus)
 dan gak enak di-scroll dalam 1 blok panjang. Ditambah Prev/Next, 5 akun
