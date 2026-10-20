@@ -477,6 +477,20 @@ sebagai systemd service `blackmagic-bot.service`.
   ada (reuse, gak buka port baru), dilindungi HTTP Basic Auth
   (`/etc/nginx/.htpasswd-dashboard`) — jadi gak perlu connect VPN/SSH
   tunnel buat ngelihatnya, cukup buka browser & login.
+- **Web control panel full fitur** (`TOOLS/bot/webapi.py` +
+  `TOOLS/bot/dashboard/index.html`) — dashboard di atas diupgrade jadi
+  panel lengkap dengan sidebar kiri (Dashboard, Akun, Trial, Backup,
+  Server Tools), fitur 1:1 sama kayak bot Telegram: buat/renew/hapus/cek
+  akun (dengan modal & tabel per protokol), trial, backup manual + atur
+  jadwal, restart layanan, reboot VPS. Frontend pakai **Tailwind CSS**
+  (CDN, dark theme) — vanilla JS, gak ada build step. Backend
+  `webapi.py` murni Python stdlib (`http.server`, bukan Flask/Django),
+  listen di `127.0.0.1:8099` doang (gak exposed langsung), dipanggil
+  lewat proxy nginx di `/dashboard/api/` yang udah ditambah basic auth
+  yang sama. Jalan sebagai systemd service `blackmagic-webapi.service`
+  terpisah dari bot Telegram, tapi keduanya share script yang sama
+  (`account.sh`, `trial-*.sh`, dst) jadi perilakunya konsisten di dua
+  antarmuka.
 
 ### [2026-10-19]
 
