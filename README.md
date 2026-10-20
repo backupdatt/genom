@@ -398,6 +398,19 @@ Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2026-10-20]
 
+#### ✨ Added (lanjutan — Info lengkap & Atur Limit)
+- **Info Akun nunjukin semua varian link** — sebelumnya "Cek Akun"/"Buat
+  Akun" di bot & web cuma kasih 1 link (WS doang). Sekarang `account.sh`
+  generate semua varian yang beneran dikonfigurasi: VMess & VLess →
+  TLS(WS)/NTLS(WS)/gRPC/HTTPUpgrade/XHTTP (5 link), Trojan → WS/gRPC
+  (2 link, emang cuma segitu yang ke-inbound-kan). Ditampilin lengkap di
+  Telegram & web panel.
+- **Atur Limit Akun** (quota + limit IP/device) buat akun yang **udah
+  ada** — sebelumnya limit cuma bisa diset pas create. Sekarang ada
+  action baru `account.sh limit <proto> <user> <quota_gb> <iplim>`,
+  tombol "⚙️ Atur Limit Akun" di bot (pilih protokol → user → quota →
+  IP limit) dan tombol "Limit" di tabel Akun web panel.
+
 Ditemukan & dibenerin pas tes instalasi beneran ke VPS (bukan cuma baca kode) —
 bug-bug ini independen dari perbaikan memory-leak kemarin:
 
