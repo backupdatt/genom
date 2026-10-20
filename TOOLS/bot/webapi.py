@@ -97,7 +97,11 @@ def h_accounts(_req):
 
 def h_account_create(req):
     b = req["body"]
-    out, rc = run_script("account.sh", "create", b["proto"], b.get("days", 7), b.get("quota", 0), b.get("iplim", 0))
+    out, rc = run_script("account.sh", "create", b["proto"], b.get("days", 7), b.get("quota", 0), b.get("iplim", 0), b.get("name", ""))
+    if "INVALID_NAME" in out:
+        return {"ok": False, "error": "Nama cuma boleh huruf/angka/._- , tanpa spasi"}
+    if "USER_EXISTS" in out:
+        return {"ok": False, "error": "Nama sudah dipakai akun lain"}
     if rc != 0:
         return {"ok": False, "error": out}
     return {"ok": True, **parse_kv(out)}

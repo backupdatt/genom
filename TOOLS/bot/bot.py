@@ -7,6 +7,7 @@ instead of SSH-ing in and using the `menu` dashboard.
 """
 import json
 import os
+import re
 import subprocess
 import time
 import urllib.request
@@ -268,6 +269,14 @@ def iplim_picker(proto, days, quota):
     ]
 
 
+def name_picker(proto, days, quota, iplim):
+    return [
+        [{"text": "🎲 Random", "callback_data": f"nn_{proto}_{days}_{quota}_{iplim}_random"}],
+        [{"text": "✏️ Custom Nama", "callback_data": f"nn_{proto}_{days}_{quota}_{iplim}_custom"}],
+        [{"text": "⬅️ Kembali", "callback_data": "newacc_proto"}],
+    ]
+
+
 LIST_PAGE_SIZE = 10
 
 
@@ -459,9 +468,15 @@ def format_links(d):
     return "\n\n".join(lines) if lines else "-"
 
 
-def handle_create_account(chat_id, proto, days, quota, iplim):
+def handle_create_account(chat_id, proto, days, quota, iplim, name=""):
     send_message(chat_id, f"⌛ Membuat akun {PROTO_LABEL[proto]} ({days} hari, quota {quota or 'unlimited'} GB, {iplim or 'unlimited'} IP)...")
-    out, rc = run_script("account.sh", "create", proto, days, quota, iplim, timeout=60)
+    out, rc = run_script("account.sh", "create", proto, days, quota, iplim, name, timeout=60)
+    if "INVALID_NAME" in out:
+        send_message(chat_id, "❌ Nama tidak valid (huruf/angka/._- doang, tanpa spasi).", BACK_BTN)
+        return
+    if "USER_EXISTS" in out:
+        send_message(chat_id, "❌ Nama itu udah dipakai akun lain. Coba nama lain.", BACK_BTN)
+        return
     if rc != 0:
         send_message(chat_id, f"❌ Gagal membuat akun.\n<code>{out}</code>", BACK_BTN)
         return
@@ -579,6 +594,18 @@ def handle_custom_input(chat_id, text):
     state = PENDING.get(str(chat_id))
     if not state:
         return
+    step = state["step"]
+    proto = state["proto"]
+
+    if step == "name":
+        name = text.strip()
+        if not re.match(r"^[a-zA-Z0-9_.-]+$", name):
+            send_message(chat_id, "❌ Nama cuma boleh huruf/angka/._- , tanpa spasi. Coba ketik lagi:")
+            return
+        PENDING.pop(str(chat_id), None)
+        handle_create_account(chat_id, proto, state["days"], state["quota"], state["iplim"], name)
+        return
+
     try:
         value = int(text)
         if value < 0:
@@ -587,8 +614,6 @@ def handle_custom_input(chat_id, text):
         send_message(chat_id, "❌ Harus angka (≥0). Coba ketik lagi:")
         return
 
-    step = state["step"]
-    proto = state["proto"]
     if step == "days":
         if value < 1:
             send_message(chat_id, "❌ Jumlah hari minimal 1. Coba ketik lagi:")
@@ -715,6 +740,13 @@ def main():
                     if iplim == "custom":
                         PENDING[str(chat_id)] = {"step": "iplim", "proto": proto, "days": days, "quota": quota}
                         send_message(chat_id, "✏️ Ketik limit IP/device (angka, 0 = unlimited):")
+                    else:
+                        send_message(chat_id, f"📝 Nama akun {PROTO_LABEL[proto]}:", name_picker(proto, days, quota, iplim))
+                elif data.startswith("nn_"):
+                    _, proto, days, quota, iplim, choice = data.split("_")
+                    if choice == "custom":
+                        PENDING[str(chat_id)] = {"step": "name", "proto": proto, "days": days, "quota": quota, "iplim": iplim}
+                        send_message(chat_id, "✏️ Ketik nama akun (huruf/angka/._- , tanpa spasi):")
                     else:
                         handle_create_account(chat_id, proto, days, quota, iplim)
                 elif data == "del_proto":

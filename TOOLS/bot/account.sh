@@ -1,7 +1,7 @@
 #!/bin/bash
 # Unified account manager for the Telegram bot: create / delete / info / renew.
 # Usage:
-#   account.sh create <vmess|vless|trojan> <days> <quota_gb> <ip_limit>
+#   account.sh create <vmess|vless|trojan> <days> <quota_gb> <ip_limit> [name]
 #   account.sh delete <vmess|vless|trojan> <user>
 #   account.sh info   <vmess|vless|trojan> <user>
 #   account.sh renew  <vmess|vless|trojan> <user> <extra_days>
@@ -52,12 +52,24 @@ emit_links() {
 case "$action" in
 
 create)
-  days="${3:-7}"; quota="${4:-0}"; iplim="${5:-0}"
+  days="${3:-7}"; quota="${4:-0}"; iplim="${5:-0}"; customname="$6"
   [[ "$days" =~ ^[0-9]+$ ]] || days=7
   [[ "$quota" =~ ^[0-9]+$ ]] || quota=0
   [[ "$iplim" =~ ^[0-9]+$ ]] || iplim=0
 
-  user="${proto^}-$(</dev/urandom tr -dc A-Z0-9 | head -c5)"
+  if [ -n "$customname" ]; then
+    if [[ ! "$customname" =~ ^[a-zA-Z0-9_.-]+$ ]]; then
+      echo "INVALID_NAME"
+      exit 2
+    fi
+    if grep -qw "$customname" "$CONFIG"; then
+      echo "USER_EXISTS"
+      exit 2
+    fi
+    user="$customname"
+  else
+    user="${proto^}-$(</dev/urandom tr -dc A-Z0-9 | head -c5)"
+  fi
   uuid=$(cat /proc/sys/kernel/random/uuid)
   exp=$(date -d "$days days" +"%Y-%m-%d")
 
