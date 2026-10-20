@@ -53,7 +53,8 @@ check_proto() {
         [ "$limit" -ge 9999 ] && continue  # unlimited
 
         local ips
-        ips=$(printf '%s\n' "${RECENT[@]}" | grep -w "email: ${user}$" | awk '{print $4}' | cut -d: -f1 | sort -u)
+        ips=$(printf '%s\n' "${RECENT[@]}" | grep -w "email: ${user}$" | awk '{print $4}' | cut -d: -f1 \
+            | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | grep -v '^127\.0\.0\.1$' | sort -u)
         local count
         count=$(echo -n "$ips" | grep -c . || true)
         if [ "$count" -gt "$limit" ]; then

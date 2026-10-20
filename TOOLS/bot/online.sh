@@ -29,7 +29,8 @@ for proto_mark in "#vmg:vmess" "#vlg:vless" "#trg:trojan"; do
     online="false"
     [ "$diff" -le 120 ] && online="true"
     hits=$(printf '%s\n' "${RECENT[@]}" | grep -c -w "email: ${user}$")
-    ip_count=$(printf '%s\n' "${RECENT[@]}" | grep -w "email: ${user}$" | awk '{print $4}' | cut -d: -f1 | sort -u | grep -c . || true)
+    ip_count=$(printf '%s\n' "${RECENT[@]}" | grep -w "email: ${user}$" | awk '{print $4}' | cut -d: -f1 \
+        | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | grep -v '^127\.0\.0\.1$' | sort -u | grep -c . || true)
     [ "$first" -eq 0 ] && echo -n ","
     first=0
     echo -n "{\"proto\":\"${proto}\",\"user\":\"${user}\",\"online\":${online},\"last_seen_secs_ago\":${diff},\"recent_hits\":${hits},\"ip_count\":${ip_count}}"
