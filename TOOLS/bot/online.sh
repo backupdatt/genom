@@ -1,9 +1,7 @@
 #!/bin/bash
-# Reports which accounts have been active recently, based on xray access.log.
-# Note: xray sits behind a local reverse proxy, so source IPs in the log are
-# all 127.0.0.1 — this can't count distinct client IPs reliably. What it CAN
-# do reliably is tell you the last time each account's traffic was seen,
-# which is used here as an "online now" signal (seen within the last 2 min).
+# Reports which accounts have been active recently, based on xray access.log,
+# including distinct real client IPs (xray trusts nginx's X-Forwarded-For —
+# see README changelog). "Online" = traffic seen within the last 2 minutes.
 ACCESS="/var/log/xray/access.log"
 CONFIG="/etc/xray/config.json"
 NOW=$(date +%s)
@@ -31,9 +29,10 @@ for proto_mark in "#vmg:vmess" "#vlg:vless" "#trg:trojan"; do
     online="false"
     [ "$diff" -le 120 ] && online="true"
     hits=$(printf '%s\n' "${RECENT[@]}" | grep -c -w "email: ${user}$")
+    ip_count=$(printf '%s\n' "${RECENT[@]}" | grep -w "email: ${user}$" | awk '{print $4}' | cut -d: -f1 | sort -u | grep -c . || true)
     [ "$first" -eq 0 ] && echo -n ","
     first=0
-    echo -n "{\"proto\":\"${proto}\",\"user\":\"${user}\",\"online\":${online},\"last_seen_secs_ago\":${diff},\"recent_hits\":${hits}}"
+    echo -n "{\"proto\":\"${proto}\",\"user\":\"${user}\",\"online\":${online},\"last_seen_secs_ago\":${diff},\"recent_hits\":${hits},\"ip_count\":${ip_count}}"
   done
 done
 echo "]"

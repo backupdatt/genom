@@ -532,7 +532,7 @@ async function loadDashboard() {
     ? sessions.map(s => `
         <div class="svc-row">
           <span><span class="dot on" style="margin-right:8px;"></span>[${s.proto}] <code>${s.user}</code></span>
-          <span style="color:var(--muted);font-size:12px;">${s.recent_hits} request · ${s.last_seen_secs_ago}s lalu</span>
+          <span style="color:var(--muted);font-size:12px;">${s.ip_count} IP · ${s.recent_hits} request · ${s.last_seen_secs_ago}s lalu</span>
         </div>`).join("")
     : `<div style="color:var(--muted-2);font-size:12px;padding:10px 0;">Tidak ada yang online sekarang.</div>`;
 }
