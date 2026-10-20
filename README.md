@@ -466,6 +466,17 @@ sebagai systemd service `blackmagic-bot.service`.
   akun upstream), sekarang instalasi interaktif asli: minta Bot Token,
   auto-detect Chat ID via `getUpdates`, tarik file dari
   `TOOLS/bot/` di repo ini sendiri.
+- **Renew Akun** di bot — perpanjang expired akun VMess/VLess/Trojan yang
+  udah ada (pilih protokol → pilih user → tambah 7/30/90 hari), gap yang
+  sebelumnya belum ke-cover (cuma ada create/delete/info).
+- **Dashboard monitoring** (`TOOLS/bot/dashboard/`) — halaman statis
+  HTML+JS ringan (gak ada backend app server, data di-generate cron tiap
+  menit ke `data.json` lewat `dashboard-gen.sh`) buat liat RAM/CPU/disk/
+  uptime, status semua service, dan jumlah akun per protokol secara
+  visual. Di-serve nginx di path `/dashboard/` lewat domain+TLS yang udah
+  ada (reuse, gak buka port baru), dilindungi HTTP Basic Auth
+  (`/etc/nginx/.htpasswd-dashboard`) — jadi gak perlu connect VPN/SSH
+  tunnel buat ngelihatnya, cukup buka browser & login.
 
 ### [2026-10-19]
 
