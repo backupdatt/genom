@@ -398,6 +398,15 @@ Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2026-10-20]
 
+#### ✨ Added — Total device terkoneksi (Online Now)
+- **Web dashboard**: panel "Online Sekarang" nambah ringkasan
+  "N akun aktif · M device total" (jumlah `ip_count` semua akun yang
+  online), jadi gak cuma liat per-akun tapi total device beneran yang
+  nyambung sekarang.
+- **Telegram bot**: fitur "📡 Online Sekarang" baru di menu utama —
+  sebelumnya fitur ini cuma ada di web, sekarang bot juga bisa nampilin
+  daftar akun online + total device + lokasi/ISP tiap akun.
+
 #### ✨ Added — Custom nama akun di web dashboard & Telegram bot
 Ketemu pas user nanya kenapa akun bikinan CLI (`menu/m-vmess.sh` dkk,
 lewat SSH) bisa custom nama (`rizal`, `andrew`, dst) tapi akun bikinan
