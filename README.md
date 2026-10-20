@@ -398,6 +398,29 @@ Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2026-10-20]
 
+#### 🐛 Fixed — RAM numpuk/habis dari CLI menu (bash process leak)
+Ketemu pas RAM VPS keliatan naik terus tanpa henti: hampir **5000
+proses `/bin/bash` numpuk** dalam 1 sesi SSH yang dibiarkan kebuka
+15+ jam, makan ~2.3GB RAM + bikin swap ke-pakai.
+- Akar masalah: tiap kali pencet "0" (balik ke menu) atau salah input
+  di hampir SEMUA script menu (`menu.sh`, `sshws.sh`, `m-vmess.sh`,
+  `m-vless.sh`, `m-trojan.sh`, `menu-backup.sh`, `m-theme.sh`,
+  `cekservice.sh`, `system.sh`), script manggil nama binary-nya
+  sendiri (misal `menu`) sebagai proses anak baru, bukan ganti proses
+  yang jalan sekarang — proses lama nunggu (`wait`) proses baru
+  selesai, jadi nggak pernah keluar selama sesi SSH itu masih hidup.
+  Makin lama dipakai (makin sering gonta-ganti menu), makin numpuk.
+- Fix: semua pemanggilan diri sendiri itu diganti pakai `exec`, jadi
+  proses diganti di tempat (PID sama) bukan nested baru — nggak ada
+  lagi akumulasi.
+- Karena file-file ini ditarik installer langsung dari repo pas
+  install (`SYSTEM/ssh-vpn.sh`/`set-br.sh` → `wget` dari
+  `menu/*.sh`), install VPS baru otomatis kebawa fix ini.
+- Proses numpuk yang udah ada di VPS production ini langsung
+  dibersihkan manual (`pkill`), RAM balik dari 2669MB → 383MB
+  terpakai, swap dari 143MB → 3MB. Service inti (xray, nginx, bot,
+  webapi, fail2ban, dropbear) gak terganggu sama sekali.
+
 #### ✨ Added — Lokasi/ISP server pakai token ipinfo.io asli
 - `menu/menu.sh` punya baris `IPINFO_TOKEN` yang tadinya cuma placeholder
   contoh (`"Abc12345"`) — diganti token asli (daftar gratis di
