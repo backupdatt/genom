@@ -398,6 +398,12 @@ Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2026-10-20]
 
+#### ✨ Added — Pagination Online Now (5 per halaman)
+List "Online Sekarang" ternyata bisa panjang (10+ akun aktif sekaligus)
+dan gak enak di-scroll dalam 1 blok panjang. Ditambah Prev/Next, 5 akun
+per halaman — web dashboard (tombol di atas panel) dan Telegram bot
+(inline keyboard, sama kayak pagination list Akun).
+
 #### ✨ Added — Total device terkoneksi (Online Now)
 - **Web dashboard**: panel "Online Sekarang" nambah ringkasan
   "N akun aktif · M device total" (jumlah `ip_count` semua akun yang
