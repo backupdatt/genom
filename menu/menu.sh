@@ -399,19 +399,19 @@ echo -e "$COLOR1╰════════════════════�
 echo -e ""
 echo -ne " ${WH}Select menu ${COLOR1}: ${WH}"; read opt
 case $opt in
-01 | 1) clear ; sshws ;;
-02 | 2) clear ; m-vmess ;;
-03 | 3) clear ; m-vless ;;
-04 | 4) clear ; m-trojan ;;
-05 | 5) clear ; menu-backup;;
-06 | 6) clear ; cekservice ;;
-07 | 7) clear ; running ;;
+01 | 1) clear ; exec sshws ;;
+02 | 2) clear ; exec m-vmess ;;
+03 | 3) clear ; exec m-vless ;;
+04 | 4) clear ; exec m-trojan ;;
+05 | 5) clear ; exec menu-backup;;
+06 | 6) clear ; exec cekservice ;;
+07 | 7) clear ; exec running ;;
 08 | 8) clear ; reboot ;;
-09 | 9) clear ; m-update ;;
-10 | 10) clear ; system ;;
-11 | 11) clear ; menu-backup;;
-12 | 12) clear ; online;;
-15 | 15) clear ; admin;;
+09 | 9) clear ; exec m-update ;;
+10 | 10) clear ; exec system ;;
+11 | 11) clear ; exec menu-backup;;
+12 | 12) clear ; exec online;;
+15 | 15) clear ; exec admin;;
 00 | 0) clear ; exec menu ;;
 *) clear ; exec menu ;;
 esac

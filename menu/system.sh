@@ -177,13 +177,13 @@ case $colormenu in
     05|5) change_theme "blue" ;;
     06|6) change_theme "cyan" ;;
     00|0) clear; exec menu ;;
-    *) clear; m-theme ;;
+    *) clear; exec m-theme ;;
 esac
 
 echo -e "\n${NC}"
 read -n 1 -s -r -p "          Press any key to return to menu"
 clear
-menu
+exec menu
 }
 
 #===============================================================================#
@@ -319,7 +319,7 @@ chmod +x /root/.acme.sh/acme.sh
 chmod 777 /etc/xray/xray.key  
 systemctl restart nginx
 systemctl restart xray
-menu
+exec menu
 }
 
 #===============================================================================#
@@ -335,7 +335,7 @@ echo -e "[ \033[32mok\033[0m ] Cache cleared"
 echo ""
 echo "Back to menu in 3 second "
 sleep 3
-menu
+exec menu
 }
 
 #===============================================================================#
@@ -381,7 +381,7 @@ echo "$idchat" > /usr/bin/idchat
 sleep 1
 bot2
 fi
-menu
+exec menu
 }
 
 #===============================================================================#
@@ -478,7 +478,7 @@ function del-exp(){
 
     echo ""
     read -n 1 -s -r -p "Tekan tombol apa saja untuk kembali..."
-menu
+exec menu
 }
 #===============================================================================#
 
@@ -525,7 +525,7 @@ systemctl restart xray
 echo -e  "$COLOR1 [ INFO ] ${WH}Succes Change Xray Core Mod "
 fi
 read -n 1 -s -r -p "Press any key to back on menu"
-menu
+exec menu
 }
 
 #===============================================================================#
@@ -547,7 +547,7 @@ echo -ne " ${WH}Select menu ${COLOR1}: ${WH}"; read opt
 case $opt in
 01 |1) clear ; domain ;; 
 02 |2) clear ; nano /etc/issue.net && chmod +x /etc/issue.net ;; 
-03 |3) clear ; m-theme ;; 
+03 |3) clear ; exec m-theme ;; 
 04 |4) clear ; coremenu ;; 
 05 |5) clear ; clearcache ;; 
 06 |6) clear ; bot2 ;; 

@@ -136,4 +136,4 @@ fun_bar 'res19'
 
 # Wait for user input to return to the menu
 read -n 1 -s -r -p "     Press any key to go back to the menu"
-menu
+exec menu

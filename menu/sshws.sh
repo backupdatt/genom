@@ -430,7 +430,7 @@ echo -e "$COLOR1 ${NC}    ${WH}• BLACK MAGIC STORE •${NC}                 $C
 echo -e "$COLOR1 ◇━━━━━━━━━━━━━━━━━◇ ${NC}" | tee -a /etc/xray/sshx/akun/log-create-${Login}.log
 echo "" | tee -a /etc/xray/sshx/akun/log-create-${Login}.log
 read -n 1 -s -r -p "Press any key to back on menu"
-menu
+exec menu
 }
 function trial(){
 clear
@@ -665,7 +665,7 @@ echo -e "$COLOR1 ${NC}    ${WH}• BLACK MAGIC STORE •${NC}                 $C
 echo -e "$COLOR1 ◇━━━━━━━━━━━━━━━━━◇ ${NC}" | tee -a /etc/xray/sshx/akun/log-create-${Login}.log
 echo "" | tee -a /etc/xray/sshx/akun/log-create-${Login}.log
 read -n 1 -s -r -p "Press any key to back on menu"
-menu
+exec menu
 }
 function renew(){
 clear
@@ -689,7 +689,7 @@ echo -e "$COLOR1│                                                 │"
 echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-sshws
+exec sshws
 fi
 echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
 echo -e "$COLOR1│${NC}${COLBG1}              ${WH}• RENEW USERS •                    │${NC}$COLOR1$NC"
@@ -705,7 +705,7 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-sshws
+exec sshws
 fi
 fi
 done
@@ -774,7 +774,7 @@ echo -e "$COLOR1│"
 echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
 fi
 read -n 1 -s -r -p "Press any key to back on menu"
-sshws
+exec sshws
 }
 function hapus(){
 NUMBER_OF_CLIENTS=$(grep -c -E "^### " "/etc/xray/ssh")
@@ -790,7 +790,7 @@ echo -e "$COLOR1│                                                 │"
 echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-sshws
+exec sshws
 fi
 echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
 echo -e "$COLOR1│${NC}${COLBG1}              ${WH}• DELETE USERS •                   │${NC}$COLOR1$NC"
@@ -806,7 +806,7 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-sshws
+exec sshws
 fi
 fi
 done
@@ -843,7 +843,7 @@ echo "$TEXT" > /etc/notiftele
 bash /etc/tele
 fi
 read -n 1 -s -r -p "Press any key to back on menu"
-sshws
+exec sshws
 }
 function cekconfig(){
 ISP=$(cat /etc/xray/isp)
@@ -866,7 +866,7 @@ echo -e "$COLOR1│                                                 │"
 echo -e "$COLOR1└─────────────────────────────────────────────────┘${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-sshws
+exec sshws
 fi
 echo -e "$COLOR1┌─────────────────────────────────────────────────┐${NC}"
 echo -e "$COLOR1│${NC}${COLBG1}              ${WH}• USER CONFIG •                    │${NC}$COLOR1$NC"
@@ -882,7 +882,7 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-sshws
+exec sshws
 fi
 fi
 done
@@ -902,7 +902,7 @@ echo "$TEXT" > /etc/notiftele
 bash /etc/tele
 fi
 read -n 1 -s -r -p "   Press any key to back on menu"
-menu
+exec menu
 }
 function hapuslama(){
 clear
@@ -944,7 +944,7 @@ echo -e "Failure: User $Pengguna Not Exist."
 fi
 sed -i "/^### $Pengguna/d" /etc/xray/ssh
 read -n 1 -s -r -p "Press any key to back on menu"
-sshws
+exec sshws
 }
 function cek(){
 
@@ -1024,7 +1024,7 @@ echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-sshws
+exec sshws
 fi
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "$COLOR1 ${NC}${COLBG1}    ${WH}⇱ Limit SSH Account ⇲        ${NC} $COLOR1 $NC"
@@ -1039,7 +1039,7 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-sshws
+exec sshws
 fi
 fi
 done
@@ -1086,7 +1086,7 @@ echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-sshws
+exec sshws
 }
 clear
 function listssh(){
@@ -1106,7 +1106,7 @@ until [[ $lock =~ ^[0-2]+$ ]]; do
 read -p "   Please select numbers 1 sampai 2 : " lock
 done
 if [[ $lock == "0" ]]; then
-menu
+exec menu
 elif [[ $lock == "1" ]]; then
 clear
 echo "lock" > /etc/typessh
@@ -1195,7 +1195,7 @@ echo -e "${COLOR1}│ $NC SUCCES GANTI TIME NOTIF LOCK JADI $notif2 MENIT $NC "
 echo -e "$COLOR1└───────────────────────────────────────────────┘${NC}"
 fi
 read -n 1 -s -r -p "Press any key to back on menu"
-sshws
+exec sshws
 }
 function lockssh(){
 clear
@@ -1213,7 +1213,7 @@ echo "You have no existing user Lock!"
 echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 read -n 1 -s -r -p "Press any key to back on menu"
-sshws
+exec sshws
 fi
 clear
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -1231,11 +1231,11 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}] to Unlock: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-sshws
+exec sshws
 fi
 if [[ ${CLIENT_NUMBER} == 'clear' ]]; then
 rm /etc/xray/sshx/listlock
-sshws
+exec sshws
 fi
 fi
 done
@@ -1274,7 +1274,7 @@ echo " Status  : Unlocked"
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-sshws
+exec sshws
 }
 clear
 author=$(cat /etc/profil)

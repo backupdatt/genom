@@ -216,4 +216,4 @@ fun_bar 'wow'
 echo -e ""
 
 cd
-menu
+exec menu

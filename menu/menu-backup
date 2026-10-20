@@ -70,9 +70,9 @@ echo -e ""
 read -p " Select menu :  "  opt
 echo -e   ""
 case $opt in
-01 | 1) clear ; backup ;;
-02 | 2) clear ; restore ;;
-02 | 3) clear ; atur-backup ;;
-00 | 0) clear ; menu ;;
-*) clear ; menu-backup ;;
+01 | 1) clear ; exec backup ;;
+02 | 2) clear ; exec restore ;;
+02 | 3) clear ; exec atur-backup ;;
+00 | 0) clear ; exec menu ;;
+*) clear ; exec menu-backup ;;
 esac

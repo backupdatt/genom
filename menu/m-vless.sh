@@ -407,7 +407,7 @@ login_ip=0
 EOF
 systemctl restart xray > /dev/null 2>&1
 read -n 1 -s -r -p "Press any key to back on menu"
-menu
+exec menu
 }
 function trial-vless(){
 clear
@@ -616,7 +616,7 @@ echo -e "$COLOR1 ◇━━━━━━━━━━━━━━━━━◇ ${NC}
 echo "" | tee -a /etc/vless/akun/log-create-${user}.log
 systemctl restart xray > /dev/null 2>&1
 read -n 1 -s -r -p "Press any key to back on menu"
-menu
+exec menu
 }
 function limit-vless(){
 clear
@@ -632,7 +632,7 @@ echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vless
+exec m-vless
 fi
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "$COLOR1 ${NC} ${COLBG1}    ${WH}⇱ Limit Vless Account ⇲     ${NC} $COLOR1 $NC"
@@ -648,7 +648,7 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-m-vless
+exec m-vless
 fi
 fi
 done
@@ -707,7 +707,7 @@ echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vless
+exec m-vless
 }
 function renew-vless(){
 clear
@@ -723,7 +723,7 @@ echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vless
+exec m-vless
 fi
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "$COLOR1 ${NC}${COLBG1}     ${WH}⇱ Renew Vless Account ⇲      ${NC} $COLOR1 $NC"
@@ -739,7 +739,7 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-m-vless
+exec m-vless
 fi
 fi
 done
@@ -803,7 +803,7 @@ echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vless
+exec m-vless
 }
 function del-vless(){
 clear
@@ -817,7 +817,7 @@ echo "You have no existing clients!"
 echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vless
+exec m-vless
 fi
 clear
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -834,7 +834,7 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-m-vless
+exec m-vless
 fi
 fi
 done
@@ -884,7 +884,7 @@ echo " Expired On  : $exp"
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vless
+exec m-vless
 }
 tim2sec() {
 mult=1
@@ -1003,7 +1003,7 @@ function cek-vless() {
     fi
     
     read -n 1 -s -r -p "     Press any key to back on menu"
-    m-vless
+    exec m-vless
 }
 function list-vless(){
 clear
@@ -1017,7 +1017,7 @@ echo "You have no existing clients!"
 echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vless
+exec m-vless
 fi
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "$COLOR1 ${NC}${COLBG1}    ${WH}⇱ Config Vless Account ⇲     ${NC} $COLOR1 $NC"
@@ -1056,7 +1056,7 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-m-vless
+exec m-vless
 fi
 fi
 done
@@ -1077,7 +1077,7 @@ echo "$TEXT" > /etc/notiftele
 bash /etc/tele
 fi
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vless
+exec m-vless
 }
 function login-vless(){
 clear
@@ -1098,7 +1098,7 @@ echo -e "$COLOR1└────────────────────�
 echo -e "$COLOR1┌───────────────────────────────────────────────┐${NC}"
 echo -e "${COLOR1}│ $NC SUCCES GANTI NOTIF LOCK JADI $notif $NC "
 echo -e "$COLOR1└───────────────────────────────────────────────┘${NC}"
-m-vless
+exec m-vless
 }
 function lock-vless(){
 cd
@@ -1116,7 +1116,7 @@ echo "You have no existing user Lock!"
 echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vless
+exec m-vless
 fi
 clear
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -1134,11 +1134,11 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}] to Unlock: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-m-vless
+exec m-vless
 fi
 if [[ ${CLIENT_NUMBER} == '999' ]]; then
 rm /etc/vless/listlock
-m-vless
+exec m-vless
 fi
 fi
 done
@@ -1183,7 +1183,7 @@ echo " Status  : Unlocked"
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vless
+exec m-vless
 }
 function res-user(){
 clear
@@ -1202,7 +1202,7 @@ echo "You have no existing user Expired!"
 echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vless
+exec m-vless
 fi
 clear
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -1220,11 +1220,11 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}] to Unlock: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-m-vless
+exec m-vless
 fi
 if [[ ${CLIENT_NUMBER} == '999' ]]; then
 rm /etc/vless/akundelete
-m-vless
+exec m-vless
 fi
 fi
 done
@@ -1292,7 +1292,7 @@ echo " Succes to Restore"
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vless
+exec m-vless
 }
 function quota-user(){
 cd
@@ -1310,7 +1310,7 @@ echo "You have no existing user Lock!"
 echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vless
+exec m-vless
 fi
 clear
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -1328,11 +1328,11 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}] to Unlock: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-m-vless
+exec m-vless
 fi
 if [[ ${CLIENT_NUMBER} == '999' ]]; then
 rm /etc/vless/userQuota
-m-vless
+exec m-vless
 fi
 fi
 done
@@ -1376,7 +1376,7 @@ echo " Status  : Unlocked"
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vless
+exec m-vless
 }
 clear
 author=$(cat /etc/profil)

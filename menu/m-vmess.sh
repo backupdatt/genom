@@ -557,7 +557,7 @@ echo -e "$COLOR1 ◇━━━━━━━━━━━━━━━━━◇ ${NC}
 echo "" | tee -a /etc/vmess/akun/log-create-${user}.log
 systemctl restart xray > /dev/null 2>&1
 read -n 1 -s -r -p "Press any key to back on menu"
-menu
+exec menu
 }
 function trial-vmess(){
 clear
@@ -880,7 +880,7 @@ echo -e "$COLOR1 ◇━━━━━━━━━━━━━━━━━◇ ${NC}
 echo "" | tee -a /etc/vmess/akun/log-create-${user}.log
 systemctl restart xray > /dev/null 2>&1
 read -n 1 -s -r -p "Press any key to back on menu"
-menu
+exec menu
 }
 function renew-vmess(){
 clear
@@ -896,7 +896,7 @@ echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vmess
+exec m-vmess
 fi
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "$COLOR1 ${NC}${COLBG1}    ${WH}⇱ Renew Vmess Account ⇲      ${NC} $COLOR1 $NC"
@@ -912,7 +912,7 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-m-vmess
+exec m-vmess
 fi
 fi
 done
@@ -976,7 +976,7 @@ echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vmess
+exec m-vmess
 }
 function limit-vmess(){
 clear
@@ -992,7 +992,7 @@ echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vmess
+exec m-vmess
 fi
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "$COLOR1 ${NC}${COLBG1}    ${WH}⇱ Limit Vmess Account ⇲      ${NC} $COLOR1 $NC"
@@ -1008,7 +1008,7 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-m-vmess
+exec m-vmess
 fi
 fi
 done
@@ -1067,7 +1067,7 @@ echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vmess
+exec m-vmess
 }
 function del-vmess(){
 clear
@@ -1081,7 +1081,7 @@ echo "You have no existing clients!"
 echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vmess
+exec m-vmess
 fi
 clear
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -1098,7 +1098,7 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-m-vmess
+exec m-vmess
 fi
 fi
 done
@@ -1148,7 +1148,7 @@ echo " Expired On  : $exp"
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vmess
+exec m-vmess
 }
 tim2sec() {
 mult=1
@@ -1267,7 +1267,7 @@ function cek-vmess() {
     fi
 
     read -n 1 -s -r -p "     Press any key to back on menu"
-    m-vmess
+    exec m-vmess
 }
 function list-vmess(){
 clear
@@ -1282,7 +1282,7 @@ echo "You have no existing clients!"
 echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vmess
+exec m-vmess
 fi
 clear
 echo ""
@@ -1300,7 +1300,7 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}]: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-m-vmess
+exec m-vmess
 fi
 fi
 done
@@ -1321,7 +1321,7 @@ echo "$TEXT" > /etc/notiftele
 bash /etc/tele
 fi
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vmess
+exec m-vmess
 }
 clear
 function login-vmess(){
@@ -1341,7 +1341,7 @@ until [[ $lock =~ ^[0-2]+$ ]]; do
 read -p "   Please select numbers 1 sampai 2 : " lock
 done
 if [[ $lock == "0" ]]; then
-menu
+exec menu
 elif [[ $lock == "1" ]]; then
 clear
 echo "lock" > /etc/typexray
@@ -1432,7 +1432,7 @@ echo -e "${COLOR1}│ $NC SUCCES GANTI TIME NOTIF LOCK JADI $notif2 MENIT $NC "
 echo -e "$COLOR1└───────────────────────────────────────────────┘${NC}"
 fi
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vmess
+exec m-vmess
 }
 function lock-vmess(){
 clear
@@ -1450,7 +1450,7 @@ echo "You have no existing user Lock!"
 echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vmess
+exec m-vmess
 fi
 clear
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -1468,11 +1468,11 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}] to Unlock: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-m-vmess
+exec m-vmess
 fi
 if [[ ${CLIENT_NUMBER} == '999' ]]; then
 rm /etc/vmess/listlock
-m-vmess
+exec m-vmess
 fi
 fi
 done
@@ -1517,7 +1517,7 @@ echo " Status  : Unlocked"
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vmess
+exec m-vmess
 }
 function res-user(){
 clear
@@ -1536,7 +1536,7 @@ echo "You have no existing user Expired!"
 echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vmess
+exec m-vmess
 fi
 clear
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -1554,11 +1554,11 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}] to Unlock: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-m-vmess
+exec m-vmess
 fi
 if [[ ${CLIENT_NUMBER} == '999' ]]; then
 rm /etc/vmess/akundelete
-m-vmess
+exec m-vmess
 fi
 fi
 done
@@ -1630,7 +1630,7 @@ echo " Succes to Restore"
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vmess
+exec m-vmess
 }
 function quota-user(){
 clear
@@ -1648,7 +1648,7 @@ echo "You have no existing user Lock!"
 echo ""
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vmess
+exec m-vmess
 fi
 clear
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -1666,11 +1666,11 @@ read -rp "Select one client [1]: " CLIENT_NUMBER
 else
 read -rp "Select one client [1-${NUMBER_OF_CLIENTS}] to Unlock: " CLIENT_NUMBER
 if [[ ${CLIENT_NUMBER} == '0' ]]; then
-m-vmess
+exec m-vmess
 fi
 if [[ ${CLIENT_NUMBER} == '999' ]]; then
 rm /etc/vmess/userQuota
-m-vmess
+exec m-vmess
 fi
 fi
 done
@@ -1715,7 +1715,7 @@ echo " Status  : Unlocked"
 echo -e "$COLOR1━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 read -n 1 -s -r -p "Press any key to back on menu"
-m-vmess
+exec m-vmess
 }
 clear
 echo -e " $COLOR1╔════════════════════════════════════════════════════╗${NC}"

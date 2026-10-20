@@ -75,13 +75,13 @@ echo -e ""
 read -p " Select menu :  "  opt
 echo -e   ""
 case $opt in
-01 | 1) clear ; online-sshws ;;
-02 | 2) clear ; online-vmess ;;
-03 | 3) clear ; online-vless ;;
-04 | 4) clear ; online-trojan ;;
-05 | 5) clear ; online-xray ;;
-06 | 6) clear ; ceklimit ;;
-07 | 7) clear ; m-tcp ;;
-00 | 0) clear ; menu ;;
-*) clear ; online ;;
+01 | 1) clear ; exec online-sshws ;;
+02 | 2) clear ; exec online-vmess ;;
+03 | 3) clear ; exec online-vless ;;
+04 | 4) clear ; exec online-trojan ;;
+05 | 5) clear ; exec online-xray ;;
+06 | 6) clear ; exec ceklimit ;;
+07 | 7) clear ; exec m-tcp ;;
+00 | 0) clear ; exec menu ;;
+*) clear ; exec online ;;
 esac

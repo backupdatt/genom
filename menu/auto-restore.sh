@@ -44,4 +44,4 @@ cd
 rm -rf *
 sleep 0.5
 read -n 1 -s -r -p "Press any key to back on menu"
-menu
+exec menu

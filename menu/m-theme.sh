@@ -72,4 +72,4 @@ esac
 echo -e "\n${NC}"
 read -n 1 -s -r -p "          Press any key to return to menu"
 clear
-menu
+exec menu
