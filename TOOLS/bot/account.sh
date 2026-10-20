@@ -127,11 +127,17 @@ info)
     secret=$(grep -A1 "^${mark2} ${user} " "$CONFIG" | grep -oE '"id": *"[^"]+"' | head -1 | grep -oE '[0-9a-f-]{36}')
   fi
   iplim=$(cat "${dir}/${user}IP" 2>/dev/null || echo "?")
+  source "$(dirname "$0")/lib-ipinfo.sh"
+  last_ip=$(tail -n 3000 /var/log/xray/access.log 2>/dev/null | grep -w "email: ${user}$" | tail -1 | awk '{print $4}' | cut -d: -f1)
+  IFS='|' read -r city isp <<< "$(ipinfo_lookup "$last_ip")"
   echo "USER=${user}"
   echo "SECRET=${secret}"
   echo "EXP=${exp}"
   echo "IPLIM=${iplim}"
   echo "DOMAIN=${domain}"
+  echo "LAST_IP=${last_ip}"
+  echo "CITY=${city}"
+  echo "ISP=${isp}"
   emit_links "$user" "$secret"
   ;;
 

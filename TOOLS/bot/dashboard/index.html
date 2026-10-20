@@ -578,7 +578,7 @@ async function loadDashboard() {
     ? sessions.map(s => `
         <div class="svc-row">
           <span><span class="dot on" style="margin-right:8px;"></span>[${s.proto}] <code>${s.user}</code></span>
-          <span style="color:var(--muted);font-size:12px;">${s.ip_count} IP · ${s.recent_hits} request · ${s.last_seen_secs_ago}s lalu</span>
+          <span style="color:var(--muted);font-size:12px;text-align:right;">${s.ip_count} IP · ${s.recent_hits} request · ${s.last_seen_secs_ago}s lalu${s.city || s.isp ? `<br>${s.city || "?"} · ${s.isp || "?"}` : ""}</span>
         </div>`).join("")
     : `<div style="color:var(--muted-2);font-size:12px;padding:10px 0;">Tidak ada yang online sekarang.</div>`;
 }
@@ -725,6 +725,7 @@ async function doInfo(user) {
     <div><b>Domain:</b> ${r.DOMAIN}</div>
     <div><b>Exp:</b> ${r.EXP}</div>
     <div><b>IP Limit:</b> ${r.IPLIM}</div>
+    ${r.LAST_IP ? `<div><b>Last IP:</b> <code>${r.LAST_IP}</code> (${r.CITY || "?"} · ${r.ISP || "?"})</div>` : ""}
     ${formatLinks(r)}
   `;
   document.getElementById("modal-info").classList.remove("hidden");

@@ -5,6 +5,7 @@
 ACCESS="/var/log/xray/access.log"
 CONFIG="/etc/xray/config.json"
 NOW=$(date +%s)
+source "$(dirname "$0")/lib-ipinfo.sh"
 
 [ -f "$ACCESS" ] || { echo "[]"; exit 0; }
 
@@ -31,9 +32,11 @@ for proto_mark in "#vmg:vmess" "#vlg:vless" "#trg:trojan"; do
     hits=$(printf '%s\n' "${RECENT[@]}" | grep -c -w "email: ${user}$")
     ip_count=$(printf '%s\n' "${RECENT[@]}" | grep -w "email: ${user}$" | awk '{print $4}' | cut -d: -f1 \
         | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | grep -v '^127\.0\.0\.1$' | sort -u | grep -c . || true)
+    last_ip=$(echo "$last_line" | awk '{print $4}' | cut -d: -f1)
+    IFS='|' read -r city isp <<< "$(ipinfo_lookup "$last_ip")"
     [ "$first" -eq 0 ] && echo -n ","
     first=0
-    echo -n "{\"proto\":\"${proto}\",\"user\":\"${user}\",\"online\":${online},\"last_seen_secs_ago\":${diff},\"recent_hits\":${hits},\"ip_count\":${ip_count}}"
+    echo -n "{\"proto\":\"${proto}\",\"user\":\"${user}\",\"online\":${online},\"last_seen_secs_ago\":${diff},\"recent_hits\":${hits},\"ip_count\":${ip_count},\"last_ip\":\"${last_ip}\",\"city\":\"${city}\",\"isp\":\"${isp}\"}"
   done
 done
 echo "]"

@@ -503,7 +503,8 @@ def handle_info_account(chat_id, proto, user):
         f"🌐 Domain : <code>{d.get('DOMAIN','?')}</code>\n"
         f"⏳ Exp    : {d.get('EXP','?')}\n"
         f"🔢 IP Limit : {d.get('IPLIM','?')}\n"
-        "━━━━━━━━━━━━━━━━━━\n"
+        + (f"📍 Last IP  : <code>{d.get('LAST_IP')}</code> ({d.get('CITY') or '?'} · {d.get('ISP') or '?'})\n" if d.get('LAST_IP') else "")
+        + "━━━━━━━━━━━━━━━━━━\n"
         f"🔗 <b>Link ({PROTO_LABEL[proto]})</b>\n\n{format_links(d)}"
     )
     send_message(chat_id, text, BACK_BTN)
