@@ -398,6 +398,19 @@ Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2026-10-21]
 
+#### 🐛 Fixed — Tombol Aksi tabel Akun kepotong di mobile (ketauan via Playwright)
+Playwright akhirnya konek lagi, jadi fix responsive di atas ini
+beneran dites visual (375px/768px/1440px), bukan cuma baca kode.
+Ketemu 1 bug nyata yang kelewat: 4 tombol aksi (Info/Renew/Limit/
+Hapus) di tabel Akun kepotong di tepi layar HP — ternyata
+`overflow-x:auto` di `.table-wrap` gak pernah "nangkep" overflow-nya
+karena tombol-tombolnya cuma wrap ke baris baru di dalam cell sempit
+alih-alih bikin tabel beneran lebih lebar dari layar. Fix: kasih
+`table { min-width: 560px }` biar scroll-nya jalan beneran, + cegah
+baris tombol Aksi ikut wrap. Diverifikasi scroll kanan nampilin 4
+tombol utuh, dan semua halaman (Dashboard, Akun, Trial, Logs, modal
+Buat Akun) dicek bersih di 3 ukuran layar.
+
 #### ✨ Added — Dashboard responsive di semua device
 Dashboard sebelumnya cuma punya `<meta viewport>` doang — sidebar
 236px fixed + layout desktop-only, belum dites beneran di HP. Gak
