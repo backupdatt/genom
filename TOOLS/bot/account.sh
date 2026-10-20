@@ -1,9 +1,10 @@
 #!/bin/bash
-# Unified account manager for the Telegram bot: create / delete / info.
+# Unified account manager for the Telegram bot: create / delete / info / renew.
 # Usage:
 #   account.sh create <vmess|vless|trojan> <days> <quota_gb> <ip_limit>
 #   account.sh delete <vmess|vless|trojan> <user>
 #   account.sh info   <vmess|vless|trojan> <user>
+#   account.sh renew  <vmess|vless|trojan> <user> <extra_days>
 set -e
 CONFIG="/etc/xray/config.json"
 action="$1"; proto="$2"
@@ -114,6 +115,31 @@ info)
     json="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${domain}\",\"port\":\"443\",\"id\":\"${secret}\",\"aid\":\"0\",\"net\":\"ws\",\"path\":\"/vmess\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"tls\"}"
     echo "LINK1=vmess://$(echo -n "$json" | base64 -w0)"
   fi
+  ;;
+
+renew)
+  user="$3"; extra_days="${4:-30}"
+  [[ "$extra_days" =~ ^[0-9]+$ ]] || extra_days=30
+  exp=$(grep -E "^${mark2} ${user} " "$CONFIG" | awk '{print $3}' | head -1)
+  if [ -z "$exp" ]; then
+    echo "NOTFOUND"
+    exit 2
+  fi
+  now_epoch=$(date +%s)
+  exp_epoch=$(date -d "$exp" +%s)
+  days_left=$(( (exp_epoch - now_epoch) / 86400 ))
+  [ "$days_left" -lt 0 ] && days_left=0
+  new_days=$(( days_left + extra_days ))
+  new_exp=$(date -d "$new_days days" +"%Y-%m-%d")
+
+  sed -i "s/^${mark1} ${user} ${exp}/${mark1} ${user} ${new_exp}/g" "$CONFIG"
+  sed -i "s/^${mark2} ${user} ${exp}/${mark2} ${user} ${new_exp}/g" "$CONFIG"
+  systemctl restart xray >/dev/null 2>&1
+
+  echo "USER=${user}"
+  echo "OLD_EXP=${exp}"
+  echo "NEW_EXP=${new_exp}"
+  echo "EXTRA_DAYS=${extra_days}"
   ;;
 
 *)

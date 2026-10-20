@@ -89,7 +89,8 @@ MAIN_MENU = [
      {"text": "🎁 Trial VLess", "callback_data": "trial_vless"},
      {"text": "🎁 Trial Trojan", "callback_data": "trial_trojan"}],
     [{"text": "➕ Buat Akun Full", "callback_data": "newacc_proto"},
-     {"text": "🔍 Cek Akun", "callback_data": "info_proto"},
+     {"text": "🔍 Cek Akun", "callback_data": "info_proto"}],
+    [{"text": "🔁 Renew Akun", "callback_data": "renew_proto"},
      {"text": "🗑️ Hapus Akun", "callback_data": "del_proto"}],
     [{"text": "🔄 Restart Xray", "callback_data": "restart_xray"},
      {"text": "💾 Backup Sekarang", "callback_data": "backup_now"}],
@@ -223,6 +224,15 @@ def quota_picker(proto, days):
     ]
 
 
+def renew_days_picker(proto, user):
+    return [
+        [{"text": "7 Hari", "callback_data": f"rd_{proto}_{user}_7"},
+         {"text": "30 Hari", "callback_data": f"rd_{proto}_{user}_30"},
+         {"text": "90 Hari", "callback_data": f"rd_{proto}_{user}_90"}],
+        [{"text": "⬅️ Kembali", "callback_data": f"renewlist_{proto}"}],
+    ]
+
+
 def iplim_picker(proto, days, quota):
     return [
         [{"text": "1 IP", "callback_data": f"ni_{proto}_{days}_{quota}_1"},
@@ -261,7 +271,7 @@ def account_list_menu(chat_id, proto, action, page=0):
     page = max(0, min(page, total_pages - 1))
     chunk = entries[page * LIST_PAGE_SIZE:(page + 1) * LIST_PAGE_SIZE]
 
-    verb = {"del": "Hapus", "info": "Cek"}[action]
+    verb = {"del": "Hapus", "info": "Cek", "renew": "Renew"}[action]
     rows = [[{"text": f"{u} (exp {e}, {tag_for(dl)})", "callback_data": f"{action}_{proto}_{u}"}] for u, e, dl in chunk]
     nav = []
     if page > 0:
@@ -459,6 +469,23 @@ def handle_info_account(chat_id, proto, user):
     send_message(chat_id, text, BACK_BTN)
 
 
+def handle_renew_account(chat_id, proto, user, extra_days):
+    out, rc = run_script("account.sh", "renew", proto, user, extra_days, timeout=30)
+    if "NOTFOUND" in out:
+        send_message(chat_id, "❌ Akun tidak ditemukan.", BACK_BTN)
+        return
+    d = parse_kv(out)
+    text = (
+        f"✅ <b>Akun {PROTO_LABEL[proto]} Diperpanjang</b>\n"
+        "━━━━━━━━━━━━━━━━━━\n"
+        f"👤 User     : <code>{d.get('USER','?')}</code>\n"
+        f"📅 Exp Lama : {d.get('OLD_EXP','?')}\n"
+        f"📅 Exp Baru : {d.get('NEW_EXP','?')}\n"
+        f"➕ Tambahan : {d.get('EXTRA_DAYS','?')} hari"
+    )
+    send_message(chat_id, text, BACK_BTN)
+
+
 def handle_restart_all(chat_id):
     send_message(chat_id, "🔁 Me-restart semua layanan (xray, nginx, dropbear, ws-stunnel, fail2ban)...")
     out, rc = run_script("restart-all.sh", timeout=60)
@@ -483,6 +510,7 @@ ONBOARDING_TEXT = (
     "📊 <b>Status Server</b> — cek RAM/CPU/uptime & status service\n"
     "👥 <b>Akun Aktif</b> — jumlah akun VMess/VLess/Trojan aktif\n"
     "🎁 <b>Trial</b> — bikin akun trial, pilih durasi lewat tombol\n"
+    "🔁 <b>Renew Akun</b> — perpanjang expired akun yang udah ada\n"
     "💾 <b>Backup</b> — backup config + upload ke Drive + kirim ke sini\n"
     "🛠️ <b>Server Tools</b> — cek port, restart layanan, reboot VPS\n\n"
     "Ketik /start atau /menu kapan saja buat balik ke menu utama.\n"
@@ -610,6 +638,23 @@ def main():
                 elif data.startswith("info_") and not data.startswith("info_proto"):
                     _, proto, user = data.split("_", 2)
                     handle_info_account(chat_id, proto, user)
+                elif data == "renew_proto":
+                    send_message(chat_id, "🔁 <b>Renew Akun</b>\nPilih protokol:", proto_picker("renewlist"))
+                elif data.startswith("renewlist_"):
+                    proto = data.split("_", 1)[1]
+                    account_list_menu(chat_id, proto, "renew")
+                elif data.startswith("renewpage_"):
+                    _, proto, page = data.split("_")
+                    account_list_menu(chat_id, proto, "renew", page=int(page))
+                elif data.startswith("renew_") and not data.startswith("renew_proto"):
+                    _, proto, user = data.split("_", 2)
+                    send_message(chat_id, f"⏳ Tambah berapa hari buat <code>{user}</code>?", renew_days_picker(proto, user))
+                elif data.startswith("rd_"):
+                    parts = data.split("_")
+                    proto = parts[1]
+                    extra_days = parts[-1]
+                    user = "_".join(parts[2:-1])
+                    handle_renew_account(chat_id, proto, user, extra_days)
 
 
 if __name__ == "__main__":
