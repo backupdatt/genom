@@ -398,6 +398,28 @@ Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2026-10-21]
 
+#### ✨ Added — Dashboard auto-refresh tiap 5 detik (bukan WebSocket)
+User nanya bisa dibuat realtime pakai WebSocket. Dicek dulu: angka
+server (Uptime/RAM/CPU/Disk/Online Now/jumlah akun) emang selalu
+dihitung live tiap request (gak di-cache), tapi `history.json` buat
+line chart cuma di-generate cron 1x/menit — jadi "ambil tiap 5 detik"
+cuma masuk akal buat angka, bukan grafik.
+- Dashboard sekarang polling `loadDashboard()` tiap 5 detik otomatis
+  selama halaman Dashboard kebuka, berhenti pas pindah halaman atau
+  tab di-minimize (`visibilitychange`), biar gak boros request pas
+  gak kepake.
+- WebSocket beneran **sengaja gak dipakai** — butuh implementasi
+  protokol WS manual di `webapi.py` (masih stdlib-only, gak ada
+  dependency) + ubah nginx buat proxy upgrade header, demi manfaat
+  yang kecil buat skala 1-2 admin. Polling tiap 5 detik buat payload
+  JSON kecil itu beban yang diabaikan.
+- Ketemu & fix 1 bug pas bikin ini: pagination "Online Sekarang"
+  ke-reset ke halaman 1 tiap `loadDashboard()` jalan — kalau gak
+  diperbaiki, polling 5 detik bakal narik admin balik ke halaman 1
+  terus kalau lagi liat halaman 2+. Diverifikasi via Playwright:
+  endpoint status kepanggil ~tiap 5 detik, dan posisi halaman Online
+  Now tetap bertahan.
+
 #### 🐛 Fixed — Tombol Aksi tabel Akun kepotong di mobile (ketauan via Playwright)
 Playwright akhirnya konek lagi, jadi fix responsive di atas ini
 beneran dites visual (375px/768px/1440px), bukan cuma baca kode.
