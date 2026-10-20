@@ -491,6 +491,33 @@ sebagai systemd service `blackmagic-bot.service`.
   terpisah dari bot Telegram, tapi keduanya share script yang sama
   (`account.sh`, `trial-*.sh`, dst) jadi perilakunya konsisten di dua
   antarmuka.
+- **Chart RAM/CPU + bar chart akun** di web panel Dashboard — line chart 2
+  jam terakhir (sample tiap menit via cron, disimpan di `history.json`,
+  rolling ~120 titik) dan bar chart jumlah akun per protokol. Warna chart
+  (`#3987e5` / `#199e70`) divalidasi pakai `dataviz` skill's
+  `validate_palette.js` buat mastiin CVD-safe, bukan asal pilih.
+- **Pagination tabel Akun** di web panel — pilih 10/15/20 baris per
+  halaman + tombol Prev/Next, konsisten sama urutan di bot (yang paling
+  cepat expired duluan).
+- **Redesign visual web panel** — ganti dari tema Tailwind dark generik
+  (near-black + satu aksen biru, salah satu pola default yang gampang
+  ketauan "AI-generated") jadi design system sendiri: palet graphite-teal
+  + aksen ganda (teal-signal buat status live, electric blue buat aksi),
+  tipografi Inter + JetBrains Mono, signature pulse-ring di satu titik
+  (status sinyal), card hover-lift, modal backdrop-blur.
+
+#### 🐛 Fixed
+- **Akun expired masih bisa dipakai sampai ~24 jam** — script pembersih
+  akun expired asli (`/usr/bin/xp`) cuma jalan sekali sehari jam 00:00
+  (`/etc/cron.d/xp_otm`), jadi akun yang expired siang/sore tetap aktif
+  sampai tengah malam berikutnya. Gak bisa sekadar naikin frekuensi cron
+  `xp` yang asli karena dia restart Xray 3x tanpa cek dulu ada perubahan
+  atau tidak — kalau dijalanin tiap 5 menit bakal restart Xray terus-
+  terusan 24/7 dan motong semua koneksi aktif berulang. Solusinya:
+  `TOOLS/bot/expiry-enforce.sh` baru, cron tiap 5 menit, cuma restart
+  Xray kalau beneran ada akun yang dihapus di run itu. Langsung ketahuan
+  jalan pas pertama diaktifkan — ketemu & hapus 1 akun trial VMess yang
+  udah expired tapi masih nyangkut di config.
 
 ### [2026-10-19]
 
