@@ -582,17 +582,32 @@ async function api(method, path, body) {
   return res.json();
 }
 
+let dashboardPollTimer = null;
+const DASHBOARD_POLL_MS = 5000;
+
 function showPage(name) {
   document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
   document.getElementById("page-" + name).classList.remove("hidden");
   document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
   document.querySelector(`.nav-item[data-page="${name}"]`).classList.add("active");
-  if (name === "dashboard") loadDashboard();
+
+  clearInterval(dashboardPollTimer);
+  if (name === "dashboard") {
+    loadDashboard();
+    dashboardPollTimer = setInterval(loadDashboard, DASHBOARD_POLL_MS);
+  }
   if (name === "akun") loadAccounts();
   if (name === "trial") loadTrialCards();
   if (name === "backup") loadBackupStatus();
   if (name === "logs") loadLogTabs();
 }
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) clearInterval(dashboardPollTimer);
+  else if (!document.getElementById("page-dashboard").classList.contains("hidden")) {
+    loadDashboard();
+    dashboardPollTimer = setInterval(loadDashboard, DASHBOARD_POLL_MS);
+  }
+});
 
 document.querySelectorAll(".nav-item").forEach(b => b.onclick = () => { showPage(b.dataset.page); closeSidebar(); });
 
@@ -643,7 +658,6 @@ async function loadDashboard() {
 
   const onl = await api("GET", "/online");
   onlineSessions = (onl.sessions || []).filter(s => s.online).sort((a, b) => a.last_seen_secs_ago - b.last_seen_secs_ago);
-  onlinePage = 0;
   renderOnlineList();
 }
 
