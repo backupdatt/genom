@@ -174,6 +174,7 @@ section.page { display: flex; flex-direction: column; gap: 16px; }
   display: inline-flex; align-items: center; gap: 6px;
 }
 .btn:active { transform: scale(.98); }
+.btn:disabled { opacity: .35; cursor: not-allowed; }
 .btn-primary { background: var(--action); color: #fff; }
 .btn-primary:hover { filter: brightness(1.1); }
 .btn-ghost { background: var(--surface-2); color: var(--text); border-color: var(--border); }
@@ -248,6 +249,29 @@ tr.empty-row td { text-align: center; padding: 28px; color: var(--muted-2); }
 .toast--err { background: var(--danger); }
 
 pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--muted); white-space: pre-wrap; line-height: 1.6; margin: 0; }
+
+/* ---------- Charts ---------- */
+.viz-root { --series-ram: #3987e5; --series-cpu: #199e70; --series-bar: #3987e5; }
+.chart-legend { display: flex; gap: 16px; margin-bottom: 10px; font-size: 12px; color: var(--muted); }
+.chart-legend .sw { display: inline-flex; align-items: center; gap: 6px; }
+.chart-legend .dot { width: 8px; height: 8px; border-radius: 50%; }
+.chart-wrap { position: relative; }
+.chart-tooltip {
+  position: absolute; pointer-events: none; background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: 8px; padding: 6px 9px;
+  font-size: 11.5px; font-family: var(--font-mono); white-space: nowrap;
+  transform: translate(-50%, -110%); display: none; z-index: 5;
+  box-shadow: 0 6px 20px rgba(0,0,0,.4);
+}
+.bar-label { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); }
+.bar-value { font-family: var(--font-mono); font-size: 12px; font-weight: 600; fill: var(--text); }
+
+/* ---------- Pagination ---------- */
+.table-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted);
+}
+.table-foot select { background: var(--surface-2); border: 1px solid var(--border); color: var(--text); border-radius: 7px; padding: 4px 7px; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -270,6 +294,14 @@ pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--mut
     <section id="page-dashboard" class="page">
       <div class="page-head"><div><span class="eyebrow">Ringkasan</span><h1>Dashboard</h1></div></div>
       <div class="stat-grid" id="stat-cards"></div>
+      <div class="panel viz-root">
+        <div class="panel-label">Pemakaian — 2 Jam Terakhir</div>
+        <div class="chart-legend">
+          <span class="sw"><span class="dot" style="background:var(--series-ram)"></span>RAM %</span>
+          <span class="sw"><span class="dot" style="background:var(--series-cpu)"></span>CPU %</span>
+        </div>
+        <div class="chart-wrap" id="usage-chart"></div>
+      </div>
       <div class="panel">
         <div class="panel-label">Status Layanan</div>
         <div class="svc-grid" id="svc-grid"></div>
@@ -277,6 +309,7 @@ pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--mut
       <div class="panel">
         <div class="panel-label">Ringkasan Akun</div>
         <div class="acc-grid" id="acc-summary"></div>
+        <div class="viz-root" id="acc-chart" style="margin-top:14px;"></div>
       </div>
     </section>
 
@@ -296,6 +329,22 @@ pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--mut
           <thead><tr><th>User</th><th>Expired</th><th>Status</th><th class="r">Aksi</th></tr></thead>
           <tbody id="akun-table"></tbody>
         </table>
+        <div class="table-foot">
+          <span id="akun-pageinfo">0 akun</span>
+          <span style="display:flex;align-items:center;gap:10px;">
+            <label>Tampilkan
+              <select id="akun-pagesize">
+                <option value="10">10</option>
+                <option value="15" selected>15</option>
+                <option value="20">20</option>
+              </select>
+            </label>
+            <span class="btn-row">
+              <button id="akun-prev" class="btn btn-ghost btn-sm">‹ Prev</button>
+              <button id="akun-next" class="btn btn-ghost btn-sm">Next ›</button>
+            </span>
+          </span>
+        </div>
       </div>
     </section>
 
@@ -438,20 +487,104 @@ async function loadDashboard() {
     <div class="acc-tile"><div class="k">VLess</div><div class="v">${a.counts.vless}</div></div>
     <div class="acc-tile"><div class="k">Trojan</div><div class="v">${a.counts.trojan}</div></div>
   `;
+  renderBarChart("acc-chart", [
+    { label: "VMess", value: a.counts.vmess },
+    { label: "VLess", value: a.counts.vless },
+    { label: "Trojan", value: a.counts.trojan },
+  ]);
+
+  try {
+    const hist = await fetch("history.json?_=" + Date.now(), { cache: "no-store" }).then(r => r.json());
+    renderLineChart("usage-chart", hist);
+  } catch (e) { /* history not ready yet */ }
+}
+
+// ---- Charts (inline SVG, dataviz-skill mark spec: 2px lines, legend, hover tooltip) ----
+function renderLineChart(containerId, data) {
+  const el = document.getElementById(containerId);
+  if (!data || data.length < 2) { el.innerHTML = `<div style="color:var(--muted-2);font-size:12px;padding:20px 0;">Belum cukup data (butuh beberapa menit berjalan).</div>`; return; }
+  const W = el.clientWidth || 600, H = 160, PAD = 28;
+  const n = data.length;
+  const x = i => PAD + (i / (n - 1)) * (W - PAD * 2);
+  const y = v => H - PAD - (Math.min(v, 100) / 100) * (H - PAD * 1.4);
+  const path = key => data.map((d, i) => `${i === 0 ? "M" : "L"} ${x(i).toFixed(1)} ${y(d[key]).toFixed(1)}`).join(" ");
+
+  let gridLines = "";
+  [0, 25, 50, 75, 100].forEach(v => {
+    gridLines += `<line x1="${PAD}" y1="${y(v)}" x2="${W - PAD}" y2="${y(v)}" stroke="var(--border)" stroke-width="1" />`;
+    gridLines += `<text x="${PAD - 6}" y="${y(v) + 3}" text-anchor="end" class="bar-label">${v}</text>`;
+  });
+
+  el.innerHTML = `
+    <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      ${gridLines}
+      <path d="${path("ram")}" fill="none" stroke="var(--series-ram)" stroke-width="2" stroke-linecap="round" />
+      <path d="${path("cpu")}" fill="none" stroke="var(--series-cpu)" stroke-width="2" stroke-linecap="round" />
+      <circle id="${containerId}-dot-ram" r="4" fill="var(--series-ram)" style="display:none" />
+      <circle id="${containerId}-dot-cpu" r="4" fill="var(--series-cpu)" style="display:none" />
+      <rect id="${containerId}-hit" x="0" y="0" width="${W}" height="${H}" fill="transparent" />
+    </svg>
+    <div class="chart-tooltip" id="${containerId}-tip"></div>
+  `;
+
+  const svg = el.querySelector("svg");
+  const tip = document.getElementById(`${containerId}-tip`);
+  const dotRam = document.getElementById(`${containerId}-dot-ram`);
+  const dotCpu = document.getElementById(`${containerId}-dot-cpu`);
+  svg.addEventListener("mousemove", (ev) => {
+    const rect = svg.getBoundingClientRect();
+    const mx = (ev.clientX - rect.left) * (W / rect.width);
+    let i = Math.round(((mx - PAD) / (W - PAD * 2)) * (n - 1));
+    i = Math.max(0, Math.min(n - 1, i));
+    const d = data[i];
+    dotRam.style.display = dotCpu.style.display = "block";
+    dotRam.setAttribute("cx", x(i)); dotRam.setAttribute("cy", y(d.ram));
+    dotCpu.setAttribute("cx", x(i)); dotCpu.setAttribute("cy", y(d.cpu));
+    tip.style.display = "block";
+    tip.style.left = `${(x(i) / W) * 100}%`;
+    tip.style.top = `${(y(Math.max(d.ram, d.cpu)) / H) * 100}%`;
+    tip.innerHTML = `${d.t}<br>RAM ${d.ram}% · CPU ${d.cpu}%`;
+  });
+  svg.addEventListener("mouseleave", () => {
+    dotRam.style.display = dotCpu.style.display = "none";
+    tip.style.display = "none";
+  });
+}
+
+function renderBarChart(containerId, items) {
+  const el = document.getElementById(containerId);
+  const W = el.clientWidth || 600, barH = 26, gap = 14, PAD = 70;
+  const max = Math.max(1, ...items.map(d => d.value));
+  const H = items.length * (barH + gap);
+  const bars = items.map((d, i) => {
+    const w = (d.value / max) * (W - PAD - 40);
+    const yy = i * (barH + gap);
+    return `
+      <text x="${PAD - 10}" y="${yy + barH / 2 + 4}" text-anchor="end" class="bar-label">${d.label}</text>
+      <rect x="${PAD}" y="${yy}" width="${Math.max(w, 2)}" height="${barH}" rx="5" fill="var(--series-bar)" opacity="${0.55 + 0.15 * i}" />
+      <text x="${PAD + w + 8}" y="${yy + barH / 2 + 4}" class="bar-value">${d.value}</text>
+    `;
+  }).join("");
+  el.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${bars}</svg>`;
 }
 
 // ---- Akun ----
 document.querySelectorAll(".proto-tab").forEach(b => b.onclick = () => {
   currentProto = b.dataset.proto;
+  akunPage = 0;
   document.querySelectorAll(".proto-tab").forEach(x => x.classList.remove("active"));
   b.classList.add("active");
   renderAkunTable();
 });
 
 let accountsCache = [];
+let akunPage = 0;
+let akunPageSize = 15;
+
 async function loadAccounts() {
   const a = await api("GET", "/accounts");
   accountsCache = a.accounts;
+  akunPage = 0;
   document.querySelector('.proto-tab[data-proto="vmess"]').classList.add("active");
   renderAkunTable();
 }
@@ -463,7 +596,11 @@ function badge(dl) {
 }
 
 function renderAkunTable() {
-  const rows = accountsCache.filter(r => r.proto === currentProto);
+  const all = accountsCache.filter(r => r.proto === currentProto);
+  const totalPages = Math.max(1, Math.ceil(all.length / akunPageSize));
+  akunPage = Math.max(0, Math.min(akunPage, totalPages - 1));
+  const rows = all.slice(akunPage * akunPageSize, (akunPage + 1) * akunPageSize);
+
   document.getElementById("akun-table").innerHTML = rows.length ? rows.map(r => `
     <tr>
       <td><code>${r.user}</code></td>
@@ -478,7 +615,21 @@ function renderAkunTable() {
       </td>
     </tr>
   `).join("") : `<tr class="empty-row"><td colspan="4">Belum ada akun ${currentProto}. Buat satu lewat tombol "+ Buat Akun".</td></tr>`;
+
+  const start = all.length ? akunPage * akunPageSize + 1 : 0;
+  const end = Math.min(all.length, (akunPage + 1) * akunPageSize);
+  document.getElementById("akun-pageinfo").textContent = `${start}-${end} dari ${all.length} akun`;
+  document.getElementById("akun-prev").disabled = akunPage === 0;
+  document.getElementById("akun-next").disabled = akunPage >= totalPages - 1;
 }
+
+document.getElementById("akun-pagesize").onchange = (e) => {
+  akunPageSize = parseInt(e.target.value);
+  akunPage = 0;
+  renderAkunTable();
+};
+document.getElementById("akun-prev").onclick = () => { akunPage--; renderAkunTable(); };
+document.getElementById("akun-next").onclick = () => { akunPage++; renderAkunTable(); };
 
 async function doInfo(user) {
   const r = await api("POST", "/accounts/info", { proto: currentProto, user });

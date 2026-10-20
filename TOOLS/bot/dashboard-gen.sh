@@ -45,3 +45,15 @@ cat > "$OUT_FILE" <<EOF
   }
 }
 EOF
+
+# ---- Rolling history for the RAM/CPU chart (kept ~2h at 1 sample/min) ----
+HIST_FILE="${OUT_DIR}/history.jsonl"
+RAM_PCT=$(awk -v u="${RAM_USED:-0}" -v t="${RAM_TOTAL:-1}" 'BEGIN { printf "%.1f", (u*100)/t }')
+CPU_NUM=$(echo "${CPU:-0}" | tr -d '%')
+echo "{\"t\":\"$(date '+%H:%M')\",\"ram\":${RAM_PCT},\"cpu\":${CPU_NUM:-0}}" >> "$HIST_FILE"
+tail -n 120 "$HIST_FILE" > "${HIST_FILE}.tmp" && mv "${HIST_FILE}.tmp" "$HIST_FILE"
+{
+  echo -n "["
+  paste -sd, "$HIST_FILE" 2>/dev/null
+  echo "]"
+} > "${OUT_DIR}/history.json"
