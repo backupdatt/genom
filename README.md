@@ -510,13 +510,32 @@ sebagai systemd service `blackmagic-bot.service`.
   Access, Xray Error) + `journalctl` 4 service (Bot, Web API, Xray,
   Nginx) langsung dari browser, gak perlu SSH buat debug.
 - **Online Sekarang** (panel baru di Dashboard, `TOOLS/bot/online.sh`) —
-  nunjukin akun yang beneran aktif (traffic xray dalam 2 menit terakhir),
-  beda sama "Akun Aktif" yang cuma nunjukin status expired. Based on
-  last-seen di `xray access.log`, BUKAN hitung IP klien — xray di sini
-  jalan di balik proxy nginx lokal jadi semua source IP yang kecatet di
-  log itu `127.0.0.1`, gak ada data IP klien asli buat dihitung.
+  nunjukin akun yang beneran aktif (traffic xray dalam 2 menit terakhir)
+  + jumlah IP berbeda yang dipakai, beda sama "Akun Aktif" yang cuma
+  nunjukin status expired.
+- **Notifikasi multi-login / limit device** (`TOOLS/bot/iplimit-check.sh`,
+  cron tiap 2 menit) — bandingin jumlah IP berbeda per akun vs limit IP
+  yang diset (`0`/`9999` = unlimited, `1`/`2`/`3` = jumlah device). Kalau
+  lebih, kirim notif Telegram (dengan cooldown 10 menit biar gak spam) —
+  **notif doang, akun gak diubah/dihapus otomatis** (keputusan sengaja,
+  biar admin yang nentuin tindakan lanjut).
 
 #### 🐛 Fixed
+- **Xray gak bisa baca IP klien asli** — semua koneksi vmess/vless/trojan
+  lewat proxy nginx lokal (`127.0.0.1`), jadi `access.log` cuma nyatet
+  `127.0.0.1` buat semua orang, bikin fitur "Online"/limit-IP gak bisa
+  bedain device. Diperbaiki dengan nambah
+  `"sockopt": {"trustedXForwardedFor": ["X-Forwarded-For"]}` di tiap
+  inbound WS/gRPC/HTTPUpgrade/XHTTP (`/etc/xray/config.json` di VPS +
+  template `SYSTEM/ins-xray.sh` buat instalasi baru) — xray versi
+  26.10.17 butuh nama header di list ini, BUKAN daftar IP/CIDR kayak
+  dokumentasi versi lama (sempat salah coba pakai `["127.0.0.1/32"]`
+  dulu, malah muncul error baru "ignored potentially forged
+  X-Forwarded-For" — ke-revert dulu sebelum ketemu format yang benar).
+  Setelah fix, `access.log` nunjukin IP publik asli, bukan `127.0.0.1`
+  lagi. Aman karena semua inbound xray cuma `listen: 127.0.0.1` (dicek
+  ke-13 inbound-nya) — satu-satunya yang bisa ngirim header itu ya nginx
+  di localhost yang sama, gak ada attack surface spoofing dari luar.
 - **Akun expired masih bisa dipakai sampai ~24 jam** — script pembersih
   akun expired asli (`/usr/bin/xp`) cuma jalan sekali sehari jam 00:00
   (`/etc/cron.d/xp_otm`), jadi akun yang expired siang/sore tetap aktif
