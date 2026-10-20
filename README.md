@@ -398,27 +398,30 @@ Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2026-10-20]
 
-#### ✨ Added (lanjutan — IP-limit jadi enforcement nyata, bukan notif doang)
-- **Blokir beneran, bukan cuma notif** — `iplimit-daemon.py` sekarang
-  aktif firewall IP yang kelebihan limit (10 menit), bukan cuma kirim
-  notif Telegram. Yang diblokir **device terbaru** (yang bikin lewat
-  limit) — device/IP pertama yang udah konek dari awal gak keganggu.
-  Keputusan ini diambil sadar sama user (2026-10-20) meski ada trade-off
-  CGNAT di bawah.
-- **Pakai `ipset`, bukan insert `iptables` satu-satu** — satu ipset
-  (`hash:ip`) dengan native per-entry timeout + 1 rule iptables statis
-  per port (80/443/8080) yang reference ke situ. Block/unblock jadi
-  O(1), gak numpuk rule, dan expiry di-handle kernel (bukan timer
-  Python) — lebih optimal dibanding pendekatan `iptables -I` naive.
-- **Safety-check CGNAT** — sebelum blokir, dicek dulu: IP itu dipakai
-  bareng sama akun **lain** juga gak dalam window yang sama? Kalau iya,
-  itu sinyal kuat IP tersebut shared (provider mobile Indonesia banyak
-  pakai Carrier-Grade NAT, ratusan pelanggan beda bisa 1 IP publik) —
-  **skip blokir, notif doang** biar gak kena pelanggan lain yang gak
-  salah apa-apa. Baru blokir kalau IP itu murni dipakai 1 akun doang.
-- `ipset` + `modprobe ip_set`/`ip_set_hash_ip` ditambahin ke
-  `SYSTEM/ssh-vpn.sh` biar instalasi VPS baru otomatis siap tanpa perlu
-  install manual lagi.
+#### ⚠️ Dicoba lalu di-revert — IP-limit active blocking
+Sempat dicoba upgrade `iplimit-daemon.py` dari notify-only jadi **aktif
+blokir** IP yang kelebihan limit (pakai `ipset`, auto-expire 10 menit,
+O(1), + safety-check CGNAT — skip blokir kalau IP dipakai bareng akun
+lain). Di-**revert total ke notify-only** di hari yang sama setelah
+kejadian nyata:
+- Percobaan pertama (hitung per-IP exact) salah blokir 2 device asli
+  admin sendiri — provider mobile Indonesia rotasi IP publik tiap
+  beberapa menit walau device-nya sama (1 HP → 15 IP beda dalam 5
+  menit, lewat 2 blok `/16`).
+- Percobaan kedua (grouping per-subnet `/16`, match persis sama data
+  insiden pertama) **masih bug** — begitu user kelebihan limit, tiap
+  baris log baru dari subnet yang sama tetap re-trigger blokir ke IP
+  exact yang berbeda-beda, jadi tetap numpuk banyak blokir.
+- Riset: Xray-core **gak punya** fitur native `limitIp` per-client
+  (field itu cuma kosmetik di beberapa panel kayak 3x-ui, gak beneran
+  di-enforce oleh core — maintainer Xray nolak nambahin business logic
+  kayak gini ke core). Bahkan panel established (Marzban, via project
+  `v2iplimit`) pakai pendekatan sama — scraping log — dengan kelemahan
+  fundamental sama: IP itu proxy yang gak reliable buat "device" kalau
+  jaringan antara klien-server gak stabil.
+- Kesimpulan: fitur blocking balik ke **notify-only** permanen (lihat
+  entri "Realtime IP-limit" di bawah) — admin dikasih tau, keputusan
+  lanjut (manual) ada di tangan admin, bukan otomatis.
 
 #### ✨ Added (lanjutan — Realtime IP-limit, Custom input, Trial lengkap)
 - **Deteksi multi-login jadi realtime** — sebelumnya `iplimit-check.sh`

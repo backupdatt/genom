@@ -309,11 +309,6 @@ sed -i '$ i\/swapfile      swap swap   defaults    0 0' /etc/fstab
 apt -y install fail2ban
 systemctl enable --now fail2ban
 
-# ipset: used by the BlackMagic bot's realtime IP-limit enforcement (TOOLS/bot/iplimit-daemon.py)
-apt -y install ipset
-modprobe ip_set 2>/dev/null
-modprobe ip_set_hash_ip 2>/dev/null
-
 # Instal DDOS Flate
 if [ -d '/usr/local/ddos' ]; then
 	echo; echo; echo "Please un-install the previous version first"
