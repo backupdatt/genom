@@ -207,9 +207,10 @@ section.page { display: flex; flex-direction: column; gap: 16px; }
 
 /* ---------- Table ---------- */
 .table-wrap { overflow-x: auto; }
-table { width: 100%; font-size: 13px; border-collapse: collapse; }
+table { width: 100%; min-width: 560px; font-size: 13px; border-collapse: collapse; }
 thead { background: var(--surface-2); }
 th { text-align: left; padding: 10px 14px; color: var(--muted-2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+td.r .btn-row { flex-wrap: nowrap; }
 th.r, td.r { text-align: right; }
 td { padding: 10px 14px; border-top: 1px solid var(--border); }
 tr.empty-row td { text-align: center; padding: 28px; color: var(--muted-2); }
