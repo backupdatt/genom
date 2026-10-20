@@ -90,6 +90,7 @@ def parse_kv(output):
 MAIN_MENU = [
     [{"text": "📊 Status Server", "callback_data": "status"},
      {"text": "👥 Akun Aktif", "callback_data": "accounts"}],
+    [{"text": "📡 Online Sekarang", "callback_data": "online_now"}],
     [{"text": "🎁 Trial VMess", "callback_data": "trial_vmess"},
      {"text": "🎁 Trial VLess", "callback_data": "trial_vless"},
      {"text": "🎁 Trial Trojan", "callback_data": "trial_trojan"}],
@@ -324,6 +325,35 @@ def account_list_menu(chat_id, proto, action, page=0):
 
 
 # ===================== Handlers =====================
+
+def handle_online(chat_id):
+    out, rc = run_script("online.sh", timeout=30)
+    try:
+        sessions = json.loads(out)
+    except json.JSONDecodeError:
+        send_message(chat_id, f"❌ Gagal baca data online.\n<code>{out[:300]}</code>", BACK_BTN)
+        return
+
+    online = [s for s in sessions if s.get("online")]
+    online.sort(key=lambda s: s.get("last_seen_secs_ago", 0))
+    total_devices = sum(s.get("ip_count", 0) for s in online)
+
+    lines = [
+        "📡 <b>Online Sekarang</b>",
+        "━━━━━━━━━━━━━━━━━━",
+        f"👥 {len(online)} akun aktif · 📱 <b>{total_devices} device</b> total",
+        "━━━━━━━━━━━━━━━━━━",
+    ]
+    if not online:
+        lines.append("Tidak ada yang online sekarang.")
+    for s in online:
+        loc = f" ({s.get('city') or '?'} · {s.get('isp') or '?'})" if s.get("city") or s.get("isp") else ""
+        lines.append(
+            f"[{s['proto']}] <code>{s['user']}</code> — {s.get('ip_count', 0)} device, "
+            f"{s.get('last_seen_secs_ago', 0)}s lalu{loc}"
+        )
+    send_message(chat_id, "\n".join(lines), BACK_BTN)
+
 
 def handle_status(chat_id):
     out, rc = run_script("status.sh")
@@ -681,6 +711,8 @@ def main():
                     handle_status(chat_id)
                 elif data == "accounts":
                     handle_accounts(chat_id)
+                elif data == "online_now":
+                    handle_online(chat_id)
                 elif data.startswith("accpage_"):
                     handle_accounts(chat_id, page=int(data.split("_", 1)[1]))
                 elif data == "trial_vmess":

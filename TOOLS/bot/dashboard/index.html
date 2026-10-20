@@ -314,6 +314,7 @@ pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--mut
       </div>
       <div class="panel">
         <div class="panel-label">Online Sekarang <span style="font-weight:400;text-transform:none;letter-spacing:0;">— aktif dalam 2 menit terakhir</span></div>
+        <div id="online-summary" style="font-size:13px;color:var(--muted);margin-bottom:8px;"></div>
         <div id="online-list" style="display:flex;flex-direction:column;gap:6px;"></div>
       </div>
     </section>
@@ -575,6 +576,10 @@ async function loadDashboard() {
 
   const onl = await api("GET", "/online");
   const sessions = (onl.sessions || []).filter(s => s.online).sort((a, b) => a.last_seen_secs_ago - b.last_seen_secs_ago);
+  const totalDevices = sessions.reduce((sum, s) => sum + (s.ip_count || 0), 0);
+  document.getElementById("online-summary").textContent = sessions.length
+    ? `${sessions.length} akun aktif · ${totalDevices} device total`
+    : "";
   document.getElementById("online-list").innerHTML = sessions.length
     ? sessions.map(s => `
         <div class="svc-row">
