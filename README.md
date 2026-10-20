@@ -505,6 +505,16 @@ sebagai systemd service `blackmagic-bot.service`.
   + aksen ganda (teal-signal buat status live, electric blue buat aksi),
   tipografi Inter + JetBrains Mono, signature pulse-ring di satu titik
   (status sinyal), card hover-lift, modal backdrop-blur.
+- **Logs viewer** (menu baru "Logs" di web panel, `TOOLS/bot/logs.sh`) —
+  tail 5 file log (Auto Backup, Expiry Warning, Expiry Enforce, Xray
+  Access, Xray Error) + `journalctl` 4 service (Bot, Web API, Xray,
+  Nginx) langsung dari browser, gak perlu SSH buat debug.
+- **Online Sekarang** (panel baru di Dashboard, `TOOLS/bot/online.sh`) —
+  nunjukin akun yang beneran aktif (traffic xray dalam 2 menit terakhir),
+  beda sama "Akun Aktif" yang cuma nunjukin status expired. Based on
+  last-seen di `xray access.log`, BUKAN hitung IP klien — xray di sini
+  jalan di balik proxy nginx lokal jadi semua source IP yang kecatet di
+  log itu `127.0.0.1`, gak ada data IP klien asli buat dihitung.
 
 #### 🐛 Fixed
 - **Akun expired masih bisa dipakai sampai ~24 jam** — script pembersih
