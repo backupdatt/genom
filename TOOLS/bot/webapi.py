@@ -191,6 +191,44 @@ def h_reboot(_req):
     return {"ok": True, "message": "Rebooting in 1 minute"}
 
 
+def h_online(_req):
+    out, rc = run_script("online.sh", timeout=30)
+    try:
+        return {"ok": True, "sessions": json.loads(out)}
+    except json.JSONDecodeError:
+        return {"ok": False, "error": out}
+
+
+def h_logs_list(_req):
+    out, _ = run_script("logs.sh", "list", timeout=15)
+    items = []
+    for line in out.splitlines():
+        if "|" in line:
+            name, size = line.split("|", 1)
+            items.append({"name": name, "size": size})
+    return {"logs": sorted(items, key=lambda i: i["name"])}
+
+
+LOG_NAMES = {"autobackup", "expiry-warn", "expiry-enforce", "xray-access", "xray-error"}
+JOURNAL_UNITS = {"bot", "webapi", "xray", "nginx"}
+
+
+def h_logs_tail(req):
+    name = req["body"].get("name", "")
+    if name not in LOG_NAMES:
+        return {"ok": False, "error": "unknown log"}
+    out, rc = run_script("logs.sh", "tail", name, 150, timeout=15)
+    return {"ok": True, "text": out}
+
+
+def h_logs_journal(req):
+    unit = req["body"].get("unit", "")
+    if unit not in JOURNAL_UNITS:
+        return {"ok": False, "error": "unknown unit"}
+    out, rc = run_script("logs.sh", "journal", unit, 150, timeout=15)
+    return {"ok": True, "text": out}
+
+
 ROUTES = {
     ("GET", "/dashboard/api/status"): h_status,
     ("GET", "/dashboard/api/accounts"): h_accounts,
@@ -205,6 +243,10 @@ ROUTES = {
     ("POST", "/dashboard/api/restart-all"): h_restart_all,
     ("POST", "/dashboard/api/restart-xray"): h_restart_xray,
     ("POST", "/dashboard/api/reboot"): h_reboot,
+    ("GET", "/dashboard/api/online"): h_online,
+    ("GET", "/dashboard/api/logs"): h_logs_list,
+    ("POST", "/dashboard/api/logs/tail"): h_logs_tail,
+    ("POST", "/dashboard/api/logs/journal"): h_logs_journal,
 }
 
 

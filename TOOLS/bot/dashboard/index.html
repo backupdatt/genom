@@ -284,6 +284,7 @@ pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--mut
       <button data-page="trial" class="nav-item"><span class="nav-icon">○</span>Trial</button>
       <button data-page="backup" class="nav-item"><span class="nav-icon">▣</span>Backup</button>
       <button data-page="tools" class="nav-item"><span class="nav-icon">▤</span>Server Tools</button>
+      <button data-page="logs" class="nav-item"><span class="nav-icon">≡</span>Logs</button>
     </nav>
     <div class="sidebar-footer" id="footer-domain">—</div>
   </aside>
@@ -310,6 +311,10 @@ pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--mut
         <div class="panel-label">Ringkasan Akun</div>
         <div class="acc-grid" id="acc-summary"></div>
         <div class="viz-root" id="acc-chart" style="margin-top:14px;"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-label">Online Sekarang <span style="font-weight:400;text-transform:none;letter-spacing:0;">— aktif dalam 2 menit terakhir</span></div>
+        <div id="online-list" style="display:flex;flex-direction:column;gap:6px;"></div>
       </div>
     </section>
 
@@ -397,6 +402,28 @@ Stunnel 8443/8880 · VMess/VLess/Trojan/SS WS TLS 443 · gRPC 443 · WS non-TLS 
       </div>
       <div id="tools-result" class="panel hidden" style="font-size:13px;"></div>
     </section>
+
+    <!-- Logs -->
+    <section id="page-logs" class="page hidden">
+      <div class="page-head"><div><span class="eyebrow">Debug</span><h1>Logs</h1></div></div>
+      <div class="panel">
+        <div class="panel-label">File Log</div>
+        <div class="btn-row" id="log-file-tabs"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-label">Service (journalctl)</div>
+        <div class="btn-row">
+          <button data-unit="bot" class="log-journal-btn btn btn-ghost btn-sm">Telegram Bot</button>
+          <button data-unit="webapi" class="log-journal-btn btn btn-ghost btn-sm">Web API</button>
+          <button data-unit="xray" class="log-journal-btn btn btn-ghost btn-sm">Xray</button>
+          <button data-unit="nginx" class="log-journal-btn btn btn-ghost btn-sm">Nginx</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-label" id="log-view-title">Pilih log di atas</div>
+        <pre id="log-view" style="font-family:var(--font-mono);font-size:11.5px;color:var(--muted);white-space:pre-wrap;max-height:400px;overflow-y:auto;margin:0;line-height:1.5;">—</pre>
+      </div>
+    </section>
   </main>
 
   <!-- Modal: new account -->
@@ -462,6 +489,7 @@ function showPage(name) {
   if (name === "akun") loadAccounts();
   if (name === "trial") loadTrialCards();
   if (name === "backup") loadBackupStatus();
+  if (name === "logs") loadLogTabs();
 }
 
 document.querySelectorAll(".nav-item").forEach(b => b.onclick = () => showPage(b.dataset.page));
@@ -497,6 +525,16 @@ async function loadDashboard() {
     const hist = await fetch("history.json?_=" + Date.now(), { cache: "no-store" }).then(r => r.json());
     renderLineChart("usage-chart", hist);
   } catch (e) { /* history not ready yet */ }
+
+  const onl = await api("GET", "/online");
+  const sessions = (onl.sessions || []).filter(s => s.online).sort((a, b) => a.last_seen_secs_ago - b.last_seen_secs_ago);
+  document.getElementById("online-list").innerHTML = sessions.length
+    ? sessions.map(s => `
+        <div class="svc-row">
+          <span><span class="dot on" style="margin-right:8px;"></span>[${s.proto}] <code>${s.user}</code></span>
+          <span style="color:var(--muted);font-size:12px;">${s.recent_hits} request · ${s.last_seen_secs_ago}s lalu</span>
+        </div>`).join("")
+    : `<div style="color:var(--muted-2);font-size:12px;padding:10px 0;">Tidak ada yang online sekarang.</div>`;
 }
 
 // ---- Charts (inline SVG, dataviz-skill mark spec: 2px lines, legend, hover tooltip) ----
@@ -743,6 +781,34 @@ document.getElementById("btn-reboot").onclick = async () => {
   await api("POST", "/reboot");
   toast("VPS akan reboot dalam 1 menit...");
 };
+
+// ---- Logs ----
+const LOG_LABEL = {
+  "autobackup": "Auto Backup", "expiry-warn": "Expiry Warning (H-3)",
+  "expiry-enforce": "Expiry Enforce", "xray-access": "Xray Access", "xray-error": "Xray Error",
+};
+async function loadLogTabs() {
+  const r = await api("GET", "/logs");
+  document.getElementById("log-file-tabs").innerHTML = r.logs.map(l => `
+    <button data-name="${l.name}" class="log-file-btn btn btn-ghost btn-sm">${LOG_LABEL[l.name] || l.name} <span style="opacity:.6;">${l.size}</span></button>
+  `).join("");
+  document.querySelectorAll(".log-file-btn").forEach(b => b.onclick = async () => {
+    setActiveLogBtn(b);
+    document.getElementById("log-view-title").textContent = LOG_LABEL[b.dataset.name] || b.dataset.name;
+    const res = await api("POST", "/logs/tail", { name: b.dataset.name });
+    document.getElementById("log-view").textContent = res.ok ? (res.text || "(kosong)") : "Gagal memuat log.";
+  });
+}
+document.querySelectorAll(".log-journal-btn").forEach(b => b.onclick = async () => {
+  setActiveLogBtn(b);
+  document.getElementById("log-view-title").textContent = "journalctl: " + b.textContent.trim();
+  const res = await api("POST", "/logs/journal", { unit: b.dataset.unit });
+  document.getElementById("log-view").textContent = res.ok ? (res.text || "(kosong)") : "Gagal memuat log.";
+});
+function setActiveLogBtn(btn) {
+  document.querySelectorAll(".log-file-btn, .log-journal-btn").forEach(x => x.classList.remove("active"));
+  btn.classList.add("active");
+}
 
 // init
 showPage("dashboard");
