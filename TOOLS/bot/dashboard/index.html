@@ -843,7 +843,7 @@ async function createTrial(proto) {
       <div><b>User:</b> <code>${r.USER}</code></div>
       <div><b>Domain:</b> ${r.DOMAIN}</div>
       <div><b>Durasi:</b> ${r.TIMER} menit</div>
-      <div style="word-break:break-all;"><b>Link:</b><br><code style="font-size:11.5px;">${r.LINK1}</code></div>
+      ${formatLinks(r)}
     </div>`;
 }
 

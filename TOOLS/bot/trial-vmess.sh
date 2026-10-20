@@ -26,13 +26,19 @@ EOF
 
 systemctl restart xray >/dev/null 2>&1
 
-tls_json="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${domain}\",\"port\":\"443\",\"id\":\"${uuid}\",\"aid\":\"0\",\"net\":\"ws\",\"path\":\"/vmess\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"tls\"}"
-ntls_json="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${domain}\",\"port\":\"80\",\"id\":\"${uuid}\",\"aid\":\"0\",\"net\":\"ws\",\"path\":\"/vmess\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"none\"}"
+j_tls="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${domain}\",\"port\":\"443\",\"id\":\"${uuid}\",\"aid\":\"0\",\"net\":\"ws\",\"path\":\"/vmess\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"tls\"}"
+j_ntls="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${domain}\",\"port\":\"80\",\"id\":\"${uuid}\",\"aid\":\"0\",\"net\":\"ws\",\"path\":\"/vmess\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"none\"}"
+j_grpc="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${domain}\",\"port\":\"443\",\"id\":\"${uuid}\",\"aid\":\"0\",\"net\":\"grpc\",\"path\":\"vmess-grpc\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"tls\"}"
+j_up="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${domain}\",\"port\":\"443\",\"id\":\"${uuid}\",\"aid\":\"0\",\"net\":\"httpupgrade\",\"path\":\"/vmess-up\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"tls\",\"sni\":\"${domain}\",\"alpn\":\"http/1.1\"}"
+j_xh="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${domain}\",\"port\":\"443\",\"id\":\"${uuid}\",\"aid\":\"0\",\"net\":\"xhttp\",\"path\":\"/vmess-xhttp\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"tls\",\"sni\":\"${domain}\",\"alpn\":\"h2,http/1.1\"}"
 
 echo "USER=${user}"
 echo "UUID=${uuid}"
 echo "EXP=${exp}"
 echo "TIMER=${timer}"
 echo "DOMAIN=${domain}"
-echo "LINK_TLS=vmess://$(echo -n "$tls_json" | base64 -w0)"
-echo "LINK_NTLS=vmess://$(echo -n "$ntls_json" | base64 -w0)"
+echo "LINK_TLS=vmess://$(echo -n "$j_tls" | base64 -w0)"
+echo "LINK_NTLS=vmess://$(echo -n "$j_ntls" | base64 -w0)"
+echo "LINK_GRPC=vmess://$(echo -n "$j_grpc" | base64 -w0)"
+echo "LINK_UPGRADE=vmess://$(echo -n "$j_up" | base64 -w0)"
+echo "LINK_XHTTP=vmess://$(echo -n "$j_xh" | base64 -w0)"

@@ -136,23 +136,20 @@ def h_account_info(req):
 
 
 TRIAL_SCRIPTS = {
-    "vmess": ("trial-vmess.sh", "LINK_TLS", "LINK_NTLS"),
-    "vless": ("trial-vless.sh", "LINK_TLS", "LINK_NTLS"),
-    "trojan": ("trial-trojan.sh", "LINK_WS", "LINK_GRPC"),
+    "vmess": "trial-vmess.sh",
+    "vless": "trial-vless.sh",
+    "trojan": "trial-trojan.sh",
 }
 
 
 def h_trial(req):
     b = req["body"]
     proto = b["proto"]
-    script, f1, f2 = TRIAL_SCRIPTS[proto]
+    script = TRIAL_SCRIPTS[proto]
     out, rc = run_script(script, b.get("minutes", 5), timeout=60)
     if rc != 0:
         return {"ok": False, "error": out}
-    d = parse_kv(out)
-    d["LINK1"] = d.get(f1, "-")
-    d["LINK2"] = d.get(f2, "-")
-    return {"ok": True, **d}
+    return {"ok": True, **parse_kv(out)}
 
 
 def h_backup_now(_req):

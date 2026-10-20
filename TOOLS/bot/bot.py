@@ -407,7 +407,7 @@ def handle_trial(chat_id, proto, label):
     send_message(chat_id, f"🎁 <b>Trial {label}</b>\nPilih durasi trial:", duration_menu(proto))
 
 
-def handle_create_trial(chat_id, proto, minutes, label, script, user_field="LINK_TLS", alt_field="LINK_NTLS"):
+def handle_create_trial(chat_id, proto, minutes, label, script):
     send_message(chat_id, f"⌛ Membuat trial {label} ({minutes} menit)...")
     out, rc = run_script(script, minutes, timeout=60)
     if rc != 0:
@@ -422,8 +422,7 @@ def handle_create_trial(chat_id, proto, minutes, label, script, user_field="LINK
         f"🌐 Domain  : <code>{d.get('DOMAIN','?')}</code>\n"
         f"⏳ Durasi  : {d.get('TIMER','?')} menit\n"
         "━━━━━━━━━━━━━━━━━━\n"
-        f"🔗 Link 1:\n<code>{d.get(user_field,'-')}</code>\n"
-        f"🔗 Link 2:\n<code>{d.get(alt_field,'-')}</code>"
+        f"🔗 <b>Link ({label})</b>\n\n{format_links(d)}"
     )
     send_message(chat_id, text, BACK_BTN)
 
@@ -683,13 +682,13 @@ def main():
                     handle_reboot(chat_id)
                 elif data.startswith("do_vmess_"):
                     minutes = data.split("_")[-1]
-                    handle_create_trial(chat_id, "vmess", minutes, "VMess", "trial-vmess.sh", "LINK_TLS", "LINK_NTLS")
+                    handle_create_trial(chat_id, "vmess", minutes, "VMess", "trial-vmess.sh")
                 elif data.startswith("do_vless_"):
                     minutes = data.split("_")[-1]
-                    handle_create_trial(chat_id, "vless", minutes, "VLess", "trial-vless.sh", "LINK_TLS", "LINK_NTLS")
+                    handle_create_trial(chat_id, "vless", minutes, "VLess", "trial-vless.sh")
                 elif data.startswith("do_trojan_"):
                     minutes = data.split("_")[-1]
-                    handle_create_trial(chat_id, "trojan", minutes, "Trojan", "trial-trojan.sh", "LINK_WS", "LINK_GRPC")
+                    handle_create_trial(chat_id, "trojan", minutes, "Trojan", "trial-trojan.sh")
                 elif data == "newacc_proto":
                     send_message(chat_id, "➕ <b>Buat Akun Full</b>\nPilih protokol:", proto_picker("newacc"))
                 elif data.startswith("newacc_"):

@@ -26,13 +26,13 @@ EOF
 
 systemctl restart xray >/dev/null 2>&1
 
-link_tls="vless://${uuid}@${domain}:443?path=/vless&security=tls&encryption=none&host=${domain}&type=ws&sni=${domain}#${user}"
-link_ntls="vless://${uuid}@${domain}:80?path=/vless&security=none&encryption=none&host=${domain}&type=ws#${user}"
-
 echo "USER=${user}"
 echo "UUID=${uuid}"
 echo "EXP=${exp}"
 echo "TIMER=${timer}"
 echo "DOMAIN=${domain}"
-echo "LINK_TLS=${link_tls}"
-echo "LINK_NTLS=${link_ntls}"
+echo "LINK_TLS=vless://${uuid}@${domain}:443?path=/vless&security=tls&encryption=none&host=${domain}&type=ws&sni=${domain}#${user}"
+echo "LINK_NTLS=vless://${uuid}@${domain}:80?path=/vless&security=none&encryption=none&host=${domain}&type=ws#${user}"
+echo "LINK_GRPC=vless://${uuid}@${domain}:443?mode=gun&security=tls&encryption=none&type=grpc&serviceName=vless-grpc&sni=${domain}#${user}"
+echo "LINK_UPGRADE=vless://${uuid}@${domain}:443?path=/vless-up&security=tls&encryption=none&host=${domain}&type=httpupgrade&sni=${domain}&alpn=http/1.1#${user}"
+echo "LINK_XHTTP=vless://${uuid}@${domain}:443?path=/vless-xhttp&security=tls&encryption=none&host=${domain}&type=xhttp&sni=${domain}&alpn=h2,http/1.1#${user}"
