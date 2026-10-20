@@ -1,5 +1,5 @@
 #!/bin/bash
-# Server status snapshot for the Telegram bot.
+# Server status snapshot for the Telegram bot and web panel.
 IP=$(curl -sS --max-time 5 ipv4.icanhazip.com)
 DOMAIN=$(cat /etc/xray/domain 2>/dev/null || echo "N/A")
 UPTIME=$(uptime -p 2>/dev/null)
@@ -7,12 +7,24 @@ RAM=$(free -m | awk '/Mem:/ {printf "%d/%dMB (%.0f%%)", $3, $2, $3*100/$2}')
 CPU=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}')
 DISK=$(df -h / | awk 'NR==2 {print $3"/"$2" ("$5")"}')
 
+IPINFO_TOKEN=$(grep -oP 'IPINFO_TOKEN="\K[^"]+' /usr/bin/menu 2>/dev/null)
+if [ -n "$IPINFO_TOKEN" ] && [ "$IPINFO_TOKEN" != "Abc12345" ]; then
+    IPINFO=$(curl -sS --max-time 5 "https://ipinfo.io/${IP}?token=${IPINFO_TOKEN}")
+    CITY=$(echo "$IPINFO" | grep -oP '"city":\s*"\K[^"]+')
+    ORG=$(echo "$IPINFO" | grep -oP '"org":\s*"\K[^"]+')
+else
+    CITY=""
+    ORG=""
+fi
+
 svc() {
     systemctl is-active --quiet "$1" && echo "ON" || echo "OFF"
 }
 
 echo "IP=${IP}"
 echo "DOMAIN=${DOMAIN}"
+echo "CITY=${CITY}"
+echo "ISP=${ORG}"
 echo "UPTIME=${UPTIME}"
 echo "RAM=${RAM}"
 echo "CPU=${CPU}%"

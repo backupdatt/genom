@@ -548,6 +548,7 @@ async function loadDashboard() {
     <div class="stat-card"><div class="k">RAM</div><div class="v">${s.RAM || "-"}</div></div>
     <div class="stat-card"><div class="k">CPU</div><div class="v">${s.CPU || "-"}</div></div>
     <div class="stat-card"><div class="k">Disk</div><div class="v">${s.DISK || "-"}</div></div>
+    ${s.CITY || s.ISP ? `<div class="stat-card"><div class="k">Lokasi / ISP</div><div class="v" style="font-size:14px;">${s.CITY || "?"} · ${s.ISP || "?"}</div></div>` : ""}
   `;
   const svc = { XRAY: "Xray", NGINX: "Nginx", DROPBEAR: "Dropbear", FAIL2BAN: "Fail2ban", WS_STUNNEL: "SSH-WS" };
   document.getElementById("svc-grid").innerHTML = Object.entries(svc).map(([k, label]) => `

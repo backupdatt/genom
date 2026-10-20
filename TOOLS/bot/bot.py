@@ -324,7 +324,8 @@ def handle_status(chat_id):
         "━━━━━━━━━━━━━━━━━━\n"
         f"🌐 IP        : <code>{d.get('IP','?')}</code>\n"
         f"🏷️ Domain    : <code>{d.get('DOMAIN','?')}</code>\n"
-        f"⏱️ Uptime    : {d.get('UPTIME','?')}\n"
+        + (f"📍 Lokasi    : {d.get('CITY')} · {d.get('ISP')}\n" if d.get('CITY') or d.get('ISP') else "")
+        + f"⏱️ Uptime    : {d.get('UPTIME','?')}\n"
         f"🧠 RAM       : {d.get('RAM','?')}\n"
         f"⚙️ CPU       : {d.get('CPU','?')}\n"
         f"💽 Disk      : {d.get('DISK','?')}\n"
