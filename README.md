@@ -398,6 +398,28 @@ Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2026-10-20]
 
+#### ✨ Added (lanjutan — Realtime IP-limit, Custom input, Trial lengkap)
+- **Deteksi multi-login jadi realtime** — sebelumnya `iplimit-check.sh`
+  jalan via cron tiap 2 menit (polling). Diganti `iplimit-daemon.py`,
+  jalan sebagai systemd service, nge-`tail -f` `access.log` xray secara
+  terus-menerus (bukan baca ulang 3000 baris tiap siklus) — begitu ada
+  baris baru masuk, langsung dicek saat itu juga. Delay turun dari
+  maks ~2 menit ke ~1 detik. Tahan logrotate (`copytruncate` maupun
+  rename-based rotation, deteksi lewat inode+size). Tetap notif-only,
+  cooldown 10 menit per user, refresh daftar user+limit dari
+  `config.json` tiap 60 detik (nangkep akun baru/limit yang diubah).
+- **Custom input** buat durasi/quota/limit IP pas "Buat Akun Full" — di
+  web ada opsi "Custom..." di dropdown yang munculin input number; di
+  Telegram ada tombol "✏️ Custom" yang minta ketik angka langsung di
+  chat (state di-track per chat_id in-memory).
+- **Trial juga nunjukin semua varian link** — sebelumnya trial VMess/
+  VLess cuma kasih 2 link (TLS/NTLS). Disamain sama Info Akun: 5 varian
+  (TLS/NTLS/gRPC/HTTPUpgrade/XHTTP) buat VMess & VLess, 2 varian
+  (WS/gRPC) buat Trojan.
+- **Modal CSS ganti native `prompt()`** — Renew & Atur Limit Akun di web
+  panel sebelumnya pakai `prompt()` bawaan browser (gak match tema).
+  Sekarang modal sendiri dengan dropdown, konsisten sama modal lain.
+
 #### ✨ Added (lanjutan — Info lengkap & Atur Limit)
 - **Info Akun nunjukin semua varian link** — sebelumnya "Cek Akun"/"Buat
   Akun" di bot & web cuma kasih 1 link (WS doang). Sekarang `account.sh`
