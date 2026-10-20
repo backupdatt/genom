@@ -4,150 +4,381 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BlackMagic VPN Panel</title>
-<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  body { background: #0b0f14; }
-  .card { background: #141a22; border: 1px solid #1f2730; }
-  .btn { @apply px-3 py-2 rounded-lg text-sm font-medium transition; }
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-thumb { background: #2a333d; border-radius: 3px; }
+:root {
+  --bg: #0a1420;
+  --surface: #10202b;
+  --surface-2: #142834;
+  --border: #1d3444;
+  --text: #e7eef3;
+  --muted: #7d94a3;
+  --muted-2: #536877;
+  --signal: #3ddc97;
+  --signal-dim: rgba(61, 220, 151, .16);
+  --action: #4f8cff;
+  --action-dim: rgba(79, 140, 255, .16);
+  --warn: #f0b429;
+  --warn-dim: rgba(240, 180, 41, .16);
+  --danger: #ff6b6b;
+  --danger-dim: rgba(255, 107, 107, .16);
+  --radius: 14px;
+  --font-ui: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background:
+    radial-gradient(circle at 15% 0%, rgba(61,220,151,.06), transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(79,140,255,.05), transparent 45%),
+    var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  min-height: 100vh;
+  display: flex;
+}
+.hidden { display: none !important; }
+code, .mono { font-family: var(--font-mono); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* Focus visibility */
+button:focus-visible, select:focus-visible, input:focus-visible {
+  outline: 2px solid var(--action);
+  outline-offset: 2px;
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar {
+  width: 236px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #0c1a26, #0a1420);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.brand {
+  padding: 24px 20px 18px;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: .02em;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.brand-mark {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--signal);
+  box-shadow: 0 0 0 0 var(--signal-dim);
+  animation: pulse-ring 2.4s ease-out infinite;
+}
+@media (prefers-reduced-motion: reduce) { .brand-mark { animation: none; } }
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(61,220,151,.45); }
+  70%  { box-shadow: 0 0 0 9px rgba(61,220,151,0); }
+  100% { box-shadow: 0 0 0 0 rgba(61,220,151,0); }
+}
+nav.sidebar-nav { flex: 1; padding: 6px 12px; display: flex; flex-direction: column; gap: 2px; }
+.nav-item {
+  all: unset;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.nav-item:hover { background: var(--surface-2); color: var(--text); }
+.nav-item.active {
+  background: var(--surface-2);
+  color: var(--text);
+  border-left-color: var(--signal);
+}
+.nav-icon { width: 16px; text-align: center; opacity: .9; }
+.sidebar-footer {
+  padding: 14px 20px 18px;
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  color: var(--muted-2);
+  font-family: var(--font-mono);
+}
+
+/* ---------- Main ---------- */
+.main { flex: 1; padding: 28px 32px; max-height: 100vh; overflow-y: auto; }
+.page-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.page-head h1 {
+  font-size: 20px; font-weight: 700; margin: 0;
+  letter-spacing: -.01em;
+}
+.page-head .eyebrow {
+  display: block; font-size: 11px; text-transform: uppercase;
+  letter-spacing: .12em; color: var(--muted-2); margin-bottom: 4px; font-weight: 600;
+}
+section.page { display: flex; flex-direction: column; gap: 16px; }
+
+/* ---------- Panel / card ---------- */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+.panel-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--muted-2); font-weight: 600; margin-bottom: 12px;
+}
+
+/* ---------- Stat grid ---------- */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 12px; }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px; transition: transform .15s, border-color .15s;
+}
+.stat-card:hover { transform: translateY(-2px); border-color: var(--action); }
+.stat-card .k { font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted-2); font-weight: 600; }
+.stat-card .v { font-family: var(--font-mono); font-size: 19px; font-weight: 600; margin-top: 6px; color: var(--text); }
+
+/* ---------- Service rows ---------- */
+.svc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 8px; }
+.svc-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface-2); border-radius: 10px; padding: 9px 13px; font-size: 13px;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot.on { background: var(--signal); box-shadow: 0 0 8px var(--signal-dim); }
+.dot.off { background: var(--danger); }
+
+/* ---------- Acc summary ---------- */
+.acc-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.acc-tile { background: var(--surface-2); border-radius: 10px; padding: 14px; text-align: center; }
+.acc-tile .k { font-size: 11px; color: var(--muted); }
+.acc-tile .v { font-family: var(--font-mono); font-size: 22px; font-weight: 600; margin-top: 2px; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  appearance: none; border: 1px solid transparent; cursor: pointer;
+  font-family: var(--font-ui); font-size: 13px; font-weight: 600;
+  padding: 9px 14px; border-radius: 10px; transition: filter .15s, transform .1s, background .15s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn:active { transform: scale(.98); }
+.btn-primary { background: var(--action); color: #fff; }
+.btn-primary:hover { filter: brightness(1.1); }
+.btn-ghost { background: var(--surface-2); color: var(--text); border-color: var(--border); }
+.btn-ghost:hover { border-color: var(--action); }
+.btn-ghost.active { background: var(--action-dim); border-color: var(--action); color: var(--text); }
+.btn-danger { background: var(--danger); color: #1a0d0d; }
+.btn-danger:hover { filter: brightness(1.08); }
+.btn-sm { padding: 5px 9px; font-size: 11.5px; border-radius: 7px; }
+.btn-block { width: 100%; justify-content: center; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---------- Fields ---------- */
+.field {
+  width: 100%; background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text); border-radius: 10px; padding: 9px 11px; font-size: 13px;
+  font-family: var(--font-ui);
+}
+
+/* ---------- Tabs ---------- */
+.tabs { display: flex; gap: 6px; }
+.tab {
+  all: unset; cursor: pointer; padding: 8px 14px; border-radius: 9px;
+  font-size: 13px; font-weight: 600; color: var(--muted);
+  border: 1px solid transparent;
+}
+.tab:hover { color: var(--text); }
+.tab.active { background: var(--signal-dim); color: var(--signal); border-color: rgba(61,220,151,.3); }
+
+/* ---------- Table ---------- */
+.table-wrap { overflow: hidden; }
+table { width: 100%; font-size: 13px; border-collapse: collapse; }
+thead { background: var(--surface-2); }
+th { text-align: left; padding: 10px 14px; color: var(--muted-2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+th.r, td.r { text-align: right; }
+td { padding: 10px 14px; border-top: 1px solid var(--border); }
+tr.empty-row td { text-align: center; padding: 28px; color: var(--muted-2); }
+
+/* ---------- Badge ---------- */
+.badge { font-family: var(--font-mono); font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600; }
+.badge--ok { background: var(--signal-dim); color: var(--signal); }
+.badge--warn { background: var(--warn-dim); color: var(--warn); }
+.badge--danger { background: var(--danger-dim); color: var(--danger); }
+
+/* ---------- Trial cards ---------- */
+.trial-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 14px; }
+.trial-card { display: flex; flex-direction: column; gap: 10px; }
+.trial-card .title { font-weight: 600; font-size: 14px; }
+
+/* ---------- Modal ---------- */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(5,10,15,.7);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center; z-index: 50;
+}
+.modal-box {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px; width: 320px; display: flex; flex-direction: column; gap: 10px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+}
+.modal-box.wide { width: 400px; }
+.modal-box h3 { margin: 0 0 2px; font-size: 15px; }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed; top: 18px; right: 18px; z-index: 60;
+  padding: 11px 16px; border-radius: 10px; font-size: 13px; font-weight: 500;
+  color: #0a1420; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  animation: toast-in .18s ease-out;
+}
+@keyframes toast-in { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform: translateY(0); } }
+.toast--ok { background: var(--signal); }
+.toast--err { background: var(--danger); }
+
+pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--muted); white-space: pre-wrap; line-height: 1.6; margin: 0; }
 </style>
 </head>
-<body class="text-slate-200 min-h-screen flex">
+<body>
 
-  <!-- Sidebar -->
-  <aside class="w-56 shrink-0 bg-[#0e1319] border-r border-[#1f2730] flex flex-col">
-    <div class="px-4 py-5 text-lg font-bold text-white">🔮 BlackMagic</div>
-    <nav class="flex-1 px-2 space-y-1" id="nav">
-      <button data-page="dashboard" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[#1b2330] flex items-center gap-2">📊 Dashboard</button>
-      <button data-page="akun" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[#1b2330] flex items-center gap-2">👥 Akun</button>
-      <button data-page="trial" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[#1b2330] flex items-center gap-2">🎁 Trial</button>
-      <button data-page="backup" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[#1b2330] flex items-center gap-2">💾 Backup</button>
-      <button data-page="tools" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-[#1b2330] flex items-center gap-2">🛠️ Server Tools</button>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark"></span>BlackMagic</div>
+    <nav class="sidebar-nav" id="nav">
+      <button data-page="dashboard" class="nav-item"><span class="nav-icon">◆</span>Dashboard</button>
+      <button data-page="akun" class="nav-item"><span class="nav-icon">◇</span>Akun</button>
+      <button data-page="trial" class="nav-item"><span class="nav-icon">○</span>Trial</button>
+      <button data-page="backup" class="nav-item"><span class="nav-icon">▣</span>Backup</button>
+      <button data-page="tools" class="nav-item"><span class="nav-icon">▤</span>Server Tools</button>
     </nav>
-    <div class="px-4 py-3 text-xs text-slate-500 border-t border-[#1f2730]" id="footer-domain">—</div>
+    <div class="sidebar-footer" id="footer-domain">—</div>
   </aside>
 
-  <!-- Main -->
-  <main class="flex-1 p-6 overflow-y-auto max-h-screen">
-    <div id="toast" class="hidden fixed top-4 right-4 px-4 py-2 rounded-lg text-sm shadow-lg z-50"></div>
+  <main class="main">
 
     <!-- Dashboard -->
-    <section id="page-dashboard" class="page space-y-4">
-      <h1 class="text-xl font-bold text-white">Dashboard</h1>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="stat-cards"></div>
-      <div class="card rounded-xl p-4">
-        <h2 class="text-sm uppercase text-slate-400 mb-3">Status Layanan</h2>
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-2" id="svc-grid"></div>
+    <section id="page-dashboard" class="page">
+      <div class="page-head"><div><span class="eyebrow">Ringkasan</span><h1>Dashboard</h1></div></div>
+      <div class="stat-grid" id="stat-cards"></div>
+      <div class="panel">
+        <div class="panel-label">Status Layanan</div>
+        <div class="svc-grid" id="svc-grid"></div>
       </div>
-      <div class="card rounded-xl p-4">
-        <h2 class="text-sm uppercase text-slate-400 mb-3">Ringkasan Akun</h2>
-        <div class="grid grid-cols-3 gap-3" id="acc-summary"></div>
+      <div class="panel">
+        <div class="panel-label">Ringkasan Akun</div>
+        <div class="acc-grid" id="acc-summary"></div>
       </div>
     </section>
 
     <!-- Akun -->
-    <section id="page-akun" class="page hidden space-y-4">
-      <div class="flex items-center justify-between">
-        <h1 class="text-xl font-bold text-white">Akun</h1>
-        <button id="btn-new-account" class="btn bg-blue-600 hover:bg-blue-500 text-white">+ Buat Akun</button>
+    <section id="page-akun" class="page hidden">
+      <div class="page-head">
+        <div><span class="eyebrow">Kelola</span><h1>Akun</h1></div>
+        <button id="btn-new-account" class="btn btn-primary">+ Buat Akun</button>
       </div>
-      <div class="flex gap-2" id="akun-tabs">
-        <button data-proto="vmess" class="proto-tab btn bg-[#1b2330] text-slate-200">VMess</button>
-        <button data-proto="vless" class="proto-tab btn bg-[#1b2330] text-slate-200">VLess</button>
-        <button data-proto="trojan" class="proto-tab btn bg-[#1b2330] text-slate-200">Trojan</button>
+      <div class="tabs" id="akun-tabs">
+        <button data-proto="vmess" class="proto-tab tab">VMess</button>
+        <button data-proto="vless" class="proto-tab tab">VLess</button>
+        <button data-proto="trojan" class="proto-tab tab">Trojan</button>
       </div>
-      <div class="card rounded-xl overflow-hidden">
-        <table class="w-full text-sm">
-          <thead class="bg-[#0e1319] text-slate-400">
-            <tr><th class="text-left px-4 py-2">User</th><th class="text-left px-4 py-2">Expired</th><th class="text-left px-4 py-2">Status</th><th class="text-right px-4 py-2">Aksi</th></tr>
-          </thead>
+      <div class="panel table-wrap" style="padding:0;">
+        <table>
+          <thead><tr><th>User</th><th>Expired</th><th>Status</th><th class="r">Aksi</th></tr></thead>
           <tbody id="akun-table"></tbody>
         </table>
       </div>
     </section>
 
     <!-- Trial -->
-    <section id="page-trial" class="page hidden space-y-4">
-      <h1 class="text-xl font-bold text-white">Trial Akun</h1>
-      <div class="grid md:grid-cols-3 gap-4" id="trial-cards"></div>
-      <div id="trial-result" class="card rounded-xl p-4 hidden"></div>
+    <section id="page-trial" class="page hidden">
+      <div class="page-head"><div><span class="eyebrow">Sekali pakai</span><h1>Trial Akun</h1></div></div>
+      <div class="trial-grid" id="trial-cards"></div>
+      <div id="trial-result" class="panel hidden"></div>
     </section>
 
     <!-- Backup -->
-    <section id="page-backup" class="page hidden space-y-4">
-      <h1 class="text-xl font-bold text-white">Backup</h1>
-      <div class="card rounded-xl p-4 flex items-center justify-between">
-        <div>
-          <div class="text-sm text-slate-400">Backup manual (zip config → upload Drive → kirim ke Telegram)</div>
-        </div>
-        <button id="btn-backup-now" class="btn bg-blue-600 hover:bg-blue-500 text-white">Backup Sekarang</button>
+    <section id="page-backup" class="page hidden">
+      <div class="page-head"><div><span class="eyebrow">Keamanan data</span><h1>Backup</h1></div></div>
+      <div class="panel" style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+        <div style="font-size:13px;color:var(--muted);">Zip config server → upload Google Drive → kirim ke Telegram</div>
+        <button id="btn-backup-now" class="btn btn-primary">Backup Sekarang</button>
       </div>
-      <div class="card rounded-xl p-4">
-        <div class="text-sm text-slate-400 mb-3">Jadwal Auto-Backup — status: <span id="backup-status" class="font-semibold text-white">-</span></div>
-        <div class="flex gap-2">
-          <button data-mode="harian" class="mode-btn btn bg-[#1b2330] text-slate-200">Harian (03:00)</button>
-          <button data-mode="mingguan" class="mode-btn btn bg-[#1b2330] text-slate-200">Mingguan (Minggu 03:00)</button>
-          <button data-mode="off" class="mode-btn btn bg-[#1b2330] text-slate-200">Matikan</button>
+      <div class="panel">
+        <div class="panel-label">Jadwal Otomatis</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Status saat ini: <b class="mono" id="backup-status" style="color:var(--text);">-</b></div>
+        <div class="btn-row">
+          <button data-mode="harian" class="mode-btn btn btn-ghost">Harian · 03:00</button>
+          <button data-mode="mingguan" class="mode-btn btn btn-ghost">Mingguan · Minggu 03:00</button>
+          <button data-mode="off" class="mode-btn btn btn-ghost">Matikan</button>
         </div>
       </div>
-      <div id="backup-result" class="card rounded-xl p-4 hidden text-sm"></div>
+      <div id="backup-result" class="panel hidden" style="font-size:13px;"></div>
     </section>
 
     <!-- Server Tools -->
-    <section id="page-tools" class="page hidden space-y-4">
-      <h1 class="text-xl font-bold text-white">Server Tools</h1>
-      <div class="grid md:grid-cols-2 gap-4">
-        <div class="card rounded-xl p-4">
-          <div class="text-sm text-slate-400 mb-3">Restart layanan</div>
-          <div class="flex gap-2">
-            <button id="btn-restart-xray" class="btn bg-[#1b2330] text-slate-200">Restart Xray</button>
-            <button id="btn-restart-all" class="btn bg-[#1b2330] text-slate-200">Restart Semua</button>
+    <section id="page-tools" class="page hidden">
+      <div class="page-head"><div><span class="eyebrow">Operasional</span><h1>Server Tools</h1></div></div>
+      <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+        <div class="panel">
+          <div class="panel-label">Restart Layanan</div>
+          <div class="btn-row">
+            <button id="btn-restart-xray" class="btn btn-ghost">Restart Xray</button>
+            <button id="btn-restart-all" class="btn btn-ghost">Restart Semua</button>
           </div>
         </div>
-        <div class="card rounded-xl p-4">
-          <div class="text-sm text-slate-400 mb-3">Reboot VPS</div>
-          <button id="btn-reboot" class="btn bg-red-600 hover:bg-red-500 text-white">♻️ Reboot Sekarang</button>
+        <div class="panel">
+          <div class="panel-label">Reboot VPS</div>
+          <button id="btn-reboot" class="btn btn-danger">Reboot Sekarang</button>
         </div>
       </div>
-      <div class="card rounded-xl p-4">
-        <div class="text-sm text-slate-400 mb-2">Port Aktif</div>
-        <pre class="text-xs text-slate-300 whitespace-pre-wrap">OpenVPN 2086 · SSH-WS Stunnel 701 · SSH SSL WS 443 · SSH WS 80/443
+      <div class="panel">
+        <div class="panel-label">Port Aktif</div>
+        <pre class="port-list">OpenVPN 2086 · SSH-WS Stunnel 701 · SSH SSL WS 443 · SSH WS 80/443
 Stunnel 8443/8880 · VMess/VLess/Trojan/SS WS TLS 443 · gRPC 443 · WS non-TLS 80</pre>
       </div>
-      <div id="tools-result" class="card rounded-xl p-4 hidden text-sm"></div>
+      <div id="tools-result" class="panel hidden" style="font-size:13px;"></div>
     </section>
   </main>
 
   <!-- Modal: new account -->
-  <div id="modal-newacc" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-40">
-    <div class="card rounded-xl p-5 w-80 space-y-3">
-      <h3 class="font-semibold text-white">Buat Akun Baru</h3>
-      <select id="na-proto" class="w-full bg-[#0e1319] border border-[#1f2730] rounded-lg px-3 py-2 text-sm">
+  <div id="modal-newacc" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h3>Buat Akun Baru</h3>
+      <select id="na-proto" class="field">
         <option value="vmess">VMess</option><option value="vless">VLess</option><option value="trojan">Trojan</option>
       </select>
-      <select id="na-days" class="w-full bg-[#0e1319] border border-[#1f2730] rounded-lg px-3 py-2 text-sm">
+      <select id="na-days" class="field">
         <option value="7">7 Hari</option><option value="30" selected>30 Hari</option><option value="90">90 Hari</option>
       </select>
-      <select id="na-quota" class="w-full bg-[#0e1319] border border-[#1f2730] rounded-lg px-3 py-2 text-sm">
+      <select id="na-quota" class="field">
         <option value="0">Unlimited Quota</option><option value="50">50 GB</option><option value="100">100 GB</option>
       </select>
-      <select id="na-iplim" class="w-full bg-[#0e1319] border border-[#1f2730] rounded-lg px-3 py-2 text-sm">
+      <select id="na-iplim" class="field">
         <option value="1">1 IP</option><option value="2">2 IP</option><option value="0">Unlimited IP</option>
       </select>
-      <div class="flex gap-2 pt-1">
-        <button id="na-cancel" class="btn bg-[#1b2330] text-slate-200 flex-1">Batal</button>
-        <button id="na-submit" class="btn bg-blue-600 hover:bg-blue-500 text-white flex-1">Buat</button>
+      <div class="btn-row" style="margin-top:4px;">
+        <button id="na-cancel" class="btn btn-ghost" style="flex:1;">Batal</button>
+        <button id="na-submit" class="btn btn-primary" style="flex:1;">Buat</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal: account info/result -->
-  <div id="modal-info" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-40">
-    <div class="card rounded-xl p-5 w-96 space-y-2">
-      <h3 class="font-semibold text-white mb-1">Detail Akun</h3>
-      <div id="info-body" class="text-sm space-y-1"></div>
-      <button id="info-close" class="btn bg-[#1b2330] text-slate-200 w-full mt-2">Tutup</button>
+  <!-- Modal: account info -->
+  <div id="modal-info" class="modal-overlay hidden">
+    <div class="modal-box wide">
+      <h3>Detail Akun</h3>
+      <div id="info-body" style="font-size:13px;display:flex;flex-direction:column;gap:5px;"></div>
+      <button id="info-close" class="btn btn-ghost btn-block" style="margin-top:6px;">Tutup</button>
     </div>
   </div>
 
@@ -156,10 +387,13 @@ const API = "/dashboard/api";
 let currentProto = "vmess";
 
 function toast(msg, ok = true) {
-  const el = document.getElementById("toast");
+  const old = document.querySelector(".toast");
+  if (old) old.remove();
+  const el = document.createElement("div");
+  el.className = `toast ${ok ? "toast--ok" : "toast--err"}`;
   el.textContent = msg;
-  el.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-sm shadow-lg z-50 ${ok ? "bg-emerald-600" : "bg-red-600"} text-white`;
-  setTimeout(() => el.classList.add("hidden"), 3500);
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
 }
 
 async function api(method, path, body) {
@@ -173,8 +407,8 @@ async function api(method, path, body) {
 function showPage(name) {
   document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
   document.getElementById("page-" + name).classList.remove("hidden");
-  document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("bg-[#1b2330]", "text-white"));
-  document.querySelector(`.nav-item[data-page="${name}"]`).classList.add("bg-[#1b2330]", "text-white");
+  document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+  document.querySelector(`.nav-item[data-page="${name}"]`).classList.add("active");
   if (name === "dashboard") loadDashboard();
   if (name === "akun") loadAccounts();
   if (name === "trial") loadTrialCards();
@@ -188,32 +422,29 @@ async function loadDashboard() {
   const s = await api("GET", "/status");
   document.getElementById("footer-domain").textContent = s.DOMAIN || "-";
   document.getElementById("stat-cards").innerHTML = `
-    <div class="card rounded-xl p-4"><div class="text-xs text-slate-400 uppercase">Uptime</div><div class="text-lg font-semibold text-white mt-1">${s.UPTIME || "-"}</div></div>
-    <div class="card rounded-xl p-4"><div class="text-xs text-slate-400 uppercase">RAM</div><div class="text-lg font-semibold text-white mt-1">${s.RAM || "-"}</div></div>
-    <div class="card rounded-xl p-4"><div class="text-xs text-slate-400 uppercase">CPU</div><div class="text-lg font-semibold text-white mt-1">${s.CPU || "-"}</div></div>
-    <div class="card rounded-xl p-4"><div class="text-xs text-slate-400 uppercase">Disk</div><div class="text-lg font-semibold text-white mt-1">${s.DISK || "-"}</div></div>
+    <div class="stat-card"><div class="k">Uptime</div><div class="v">${s.UPTIME || "-"}</div></div>
+    <div class="stat-card"><div class="k">RAM</div><div class="v">${s.RAM || "-"}</div></div>
+    <div class="stat-card"><div class="k">CPU</div><div class="v">${s.CPU || "-"}</div></div>
+    <div class="stat-card"><div class="k">Disk</div><div class="v">${s.DISK || "-"}</div></div>
   `;
   const svc = { XRAY: "Xray", NGINX: "Nginx", DROPBEAR: "Dropbear", FAIL2BAN: "Fail2ban", WS_STUNNEL: "SSH-WS" };
   document.getElementById("svc-grid").innerHTML = Object.entries(svc).map(([k, label]) => `
-    <div class="flex items-center justify-between px-3 py-2 rounded-lg bg-[#0e1319]">
-      <span>${label}</span>
-      <span class="w-2 h-2 rounded-full ${s[k] === "ON" ? "bg-emerald-500" : "bg-red-500"}"></span>
-    </div>
+    <div class="svc-row"><span>${label}</span><span class="dot ${s[k] === "ON" ? "on" : "off"}"></span></div>
   `).join("");
 
   const a = await api("GET", "/accounts");
   document.getElementById("acc-summary").innerHTML = `
-    <div class="rounded-lg bg-[#0e1319] p-3 text-center"><div class="text-xs text-slate-400">VMess</div><div class="text-xl font-bold text-white">${a.counts.vmess}</div></div>
-    <div class="rounded-lg bg-[#0e1319] p-3 text-center"><div class="text-xs text-slate-400">VLess</div><div class="text-xl font-bold text-white">${a.counts.vless}</div></div>
-    <div class="rounded-lg bg-[#0e1319] p-3 text-center"><div class="text-xs text-slate-400">Trojan</div><div class="text-xl font-bold text-white">${a.counts.trojan}</div></div>
+    <div class="acc-tile"><div class="k">VMess</div><div class="v">${a.counts.vmess}</div></div>
+    <div class="acc-tile"><div class="k">VLess</div><div class="v">${a.counts.vless}</div></div>
+    <div class="acc-tile"><div class="k">Trojan</div><div class="v">${a.counts.trojan}</div></div>
   `;
 }
 
 // ---- Akun ----
 document.querySelectorAll(".proto-tab").forEach(b => b.onclick = () => {
   currentProto = b.dataset.proto;
-  document.querySelectorAll(".proto-tab").forEach(x => x.classList.remove("bg-blue-600", "text-white"));
-  b.classList.add("bg-blue-600", "text-white");
+  document.querySelectorAll(".proto-tab").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
   renderAkunTable();
 });
 
@@ -221,30 +452,32 @@ let accountsCache = [];
 async function loadAccounts() {
   const a = await api("GET", "/accounts");
   accountsCache = a.accounts;
-  document.querySelector('.proto-tab[data-proto="vmess"]').classList.add("bg-blue-600", "text-white");
+  document.querySelector('.proto-tab[data-proto="vmess"]').classList.add("active");
   renderAkunTable();
 }
 
 function badge(dl) {
-  if (dl < 0) return `<span class="px-2 py-0.5 rounded bg-red-600/20 text-red-400 text-xs">expired</span>`;
-  if (dl <= 3) return `<span class="px-2 py-0.5 rounded bg-amber-600/20 text-amber-400 text-xs">${dl}d left</span>`;
-  return `<span class="px-2 py-0.5 rounded bg-emerald-600/20 text-emerald-400 text-xs">${dl}d left</span>`;
+  if (dl < 0) return `<span class="badge badge--danger">expired</span>`;
+  if (dl <= 3) return `<span class="badge badge--warn">${dl}d left</span>`;
+  return `<span class="badge badge--ok">${dl}d left</span>`;
 }
 
 function renderAkunTable() {
   const rows = accountsCache.filter(r => r.proto === currentProto);
   document.getElementById("akun-table").innerHTML = rows.length ? rows.map(r => `
-    <tr class="border-t border-[#1f2730]">
-      <td class="px-4 py-2"><code class="text-xs">${r.user}</code></td>
-      <td class="px-4 py-2 text-slate-400">${r.exp}</td>
-      <td class="px-4 py-2">${badge(r.days_left)}</td>
-      <td class="px-4 py-2 text-right space-x-1">
-        <button class="btn bg-[#1b2330] text-xs" onclick="doInfo('${r.user}')">Info</button>
-        <button class="btn bg-[#1b2330] text-xs" onclick="doRenew('${r.user}')">Renew</button>
-        <button class="btn bg-red-600/80 hover:bg-red-600 text-xs text-white" onclick="doDelete('${r.user}')">Hapus</button>
+    <tr>
+      <td><code>${r.user}</code></td>
+      <td style="color:var(--muted);">${r.exp}</td>
+      <td>${badge(r.days_left)}</td>
+      <td class="r">
+        <span class="btn-row" style="justify-content:flex-end;">
+          <button class="btn btn-ghost btn-sm" onclick="doInfo('${r.user}')">Info</button>
+          <button class="btn btn-ghost btn-sm" onclick="doRenew('${r.user}')">Renew</button>
+          <button class="btn btn-danger btn-sm" onclick="doDelete('${r.user}')">Hapus</button>
+        </span>
       </td>
     </tr>
-  `).join("") : `<tr><td colspan="4" class="px-4 py-6 text-center text-slate-500">Tidak ada akun ${currentProto}.</td></tr>`;
+  `).join("") : `<tr class="empty-row"><td colspan="4">Belum ada akun ${currentProto}. Buat satu lewat tombol "+ Buat Akun".</td></tr>`;
 }
 
 async function doInfo(user) {
@@ -252,11 +485,11 @@ async function doInfo(user) {
   if (!r.ok) return toast("Gagal: " + r.error, false);
   document.getElementById("info-body").innerHTML = `
     <div><b>User:</b> <code>${r.USER}</code></div>
-    <div><b>Secret:</b> <code class="break-all">${r.SECRET}</code></div>
+    <div><b>Secret:</b> <code style="word-break:break-all;">${r.SECRET}</code></div>
     <div><b>Domain:</b> ${r.DOMAIN}</div>
     <div><b>Exp:</b> ${r.EXP}</div>
     <div><b>IP Limit:</b> ${r.IPLIM}</div>
-    <div class="break-all"><b>Link:</b><br><code class="text-xs">${r.LINK1}</code></div>
+    <div style="word-break:break-all;"><b>Link:</b><br><code style="font-size:11.5px;">${r.LINK1}</code></div>
   `;
   document.getElementById("modal-info").classList.remove("hidden");
 }
@@ -299,12 +532,12 @@ document.getElementById("na-submit").onclick = async () => {
 const TRIAL_LABEL = { vmess: "VMess", vless: "VLess", trojan: "Trojan" };
 function loadTrialCards() {
   document.getElementById("trial-cards").innerHTML = Object.keys(TRIAL_LABEL).map(p => `
-    <div class="card rounded-xl p-4 space-y-2">
-      <div class="font-semibold text-white">${TRIAL_LABEL[p]}</div>
-      <select id="trial-dur-${p}" class="w-full bg-[#0e1319] border border-[#1f2730] rounded-lg px-3 py-2 text-sm">
+    <div class="panel trial-card">
+      <div class="title">${TRIAL_LABEL[p]}</div>
+      <select id="trial-dur-${p}" class="field">
         <option value="5">5 Menit</option><option value="60">60 Menit</option><option value="1440">1440 Menit (1 Hari)</option>
       </select>
-      <button class="btn bg-blue-600 hover:bg-blue-500 text-white w-full" onclick="createTrial('${p}')">Buat Trial</button>
+      <button class="btn btn-primary btn-block" onclick="createTrial('${p}')">Buat Trial</button>
     </div>
   `).join("");
 }
@@ -314,14 +547,14 @@ async function createTrial(proto) {
   const r = await api("POST", "/trial", { proto, minutes });
   const el = document.getElementById("trial-result");
   el.classList.remove("hidden");
-  if (!r.ok) { el.innerHTML = `<span class="text-red-400">Gagal: ${r.error}</span>`; return; }
+  if (!r.ok) { el.innerHTML = `<span style="color:var(--danger);">Gagal: ${r.error}</span>`; return; }
   el.innerHTML = `
-    <div class="font-semibold text-white mb-2">Trial ${TRIAL_LABEL[proto]} dibuat</div>
-    <div class="text-sm space-y-1">
+    <div style="font-weight:600;margin-bottom:8px;">Trial ${TRIAL_LABEL[proto]} dibuat</div>
+    <div style="font-size:13px;display:flex;flex-direction:column;gap:4px;">
       <div><b>User:</b> <code>${r.USER}</code></div>
       <div><b>Domain:</b> ${r.DOMAIN}</div>
       <div><b>Durasi:</b> ${r.TIMER} menit</div>
-      <div class="break-all"><b>Link:</b><br><code class="text-xs">${r.LINK1}</code></div>
+      <div style="word-break:break-all;"><b>Link:</b><br><code style="font-size:11.5px;">${r.LINK1}</code></div>
     </div>`;
 }
 
@@ -335,7 +568,7 @@ document.getElementById("btn-backup-now").onclick = async () => {
   const r = await api("POST", "/backup/now");
   const el = document.getElementById("backup-result");
   el.classList.remove("hidden");
-  el.innerHTML = r.ok ? `<span class="text-emerald-400">✅ Backup selesai.</span>` : `<span class="text-red-400">❌ Gagal: ${r.log}</span>`;
+  el.innerHTML = r.ok ? `<span style="color:var(--signal);">Backup selesai.</span>` : `<span style="color:var(--danger);">Gagal: ${r.log}</span>`;
 };
 document.querySelectorAll(".mode-btn").forEach(b => b.onclick = async () => {
   const r = await api("POST", "/backup/schedule", { mode: b.dataset.mode });
@@ -347,7 +580,7 @@ document.querySelectorAll(".mode-btn").forEach(b => b.onclick = async () => {
 document.getElementById("btn-restart-xray").onclick = async () => {
   const r = await api("POST", "/restart-xray");
   document.getElementById("tools-result").classList.remove("hidden");
-  document.getElementById("tools-result").innerHTML = r.ok ? "✅ Xray restarted." : "❌ Gagal restart Xray.";
+  document.getElementById("tools-result").innerHTML = r.ok ? "Xray restarted." : "Gagal restart Xray.";
 };
 document.getElementById("btn-restart-all").onclick = async () => {
   const r = await api("POST", "/restart-all");
