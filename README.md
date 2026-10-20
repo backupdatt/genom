@@ -398,6 +398,41 @@ Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2026-10-21]
 
+#### ✨ Added — Pemakaian bandwidth: hari ini/kemarin/bulan ini (per-akun & server)
+User nanya ada info total kuota terpakai (hari ini/kemarin/bulanan)
+gak. Dicek dulu: sistem lama cuma simpen 1 angka kumulatif seumur
+hidup akun (buat enforcement quota doang), gak ada histori harian
+sama sekali.
+- **Ketemu bug pre-existing**: mekanisme usage-tracking lama
+  (`xraylimit.sh` → `/etc/limit/<proto>/<user>`) ternyata **gak
+  pernah jalan** di VPS ini — gate-nya pakai heuristik timestamp log
+  yang rapuh (mirip masalah CGNAT yang udah ditemu sebelumnya di
+  sesi ini) dan gak pernah match walau ada 11 akun vless aktif
+  beneran. Jadi fitur auto-delete-saat-lewat-quota kemungkinan besar
+  **gak pernah beneran enforce** — ini temuan terpisah, di luar
+  scope kerjaan ini, FYI aja buat ditindaklanjuti kalau mau.
+- Dibangun pipeline baru yang independen, gak gantungan sama
+  `xraylimit.sh`:
+  - `usage-collect.sh` (cron tiap 5 menit): ambil uplink+downlink
+    langsung dari Xray stats API native (`xray api stats ... -reset`),
+    akumulasi ke `/etc/xray-usage/total/<proto>/<user>`.
+  - `usage-snapshot.sh` (cron harian): snapshot total itu tiap hari,
+    biar bisa dihitung selisih "sekarang vs tengah malam
+    hari-ini/kemarin/tanggal-1-bulan-ini".
+  - `usage.sh`: query interface (`account`/`server`), dipakai
+    `account.sh info`, endpoint baru `/dashboard/api/usage`, dan bot.
+- Ditangani kasus "fitur baru aktif di tengah bulan/hari": delta
+  cuma dihitung kalau snapshot baseline-nya BENERAN ada di disk,
+  kalau nggak langsung 0 — biar hari pertama gak salah nampilin
+  total seumur hidup akun sebagai "kemarin". "Bulan ini" jatuh ke
+  snapshot paling awal yang ada (bukan harus nunggu tanggal 1 beneran
+  tiba), jadi langsung jalan dari hari pertama.
+- Tampil di **web dashboard** (panel baru "Pemakaian Bandwidth" +
+  tambahan di modal Info Akun) dan **Telegram bot** (Status Server +
+  Info Akun). Diverifikasi end-to-end: angka cross-check manual ke
+  `xray api stats` langsung, growth kebukti lewat re-run collector,
+  tampilan dicek via Playwright screenshot (bukan cuma curl).
+
 #### ✨ Added — Dashboard auto-refresh tiap 5 detik (bukan WebSocket)
 User nanya bisa dibuat realtime pakai WebSocket. Dicek dulu: angka
 server (Uptime/RAM/CPU/Disk/Online Now/jumlah akun) emang selalu
