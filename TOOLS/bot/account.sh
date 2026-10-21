@@ -10,7 +10,6 @@ set -e
 CONFIG="/etc/xray/config.json"
 action="$1"; proto="$2"
 domain=$(cat /etc/xray/domain 2>/dev/null || echo "N/A")
-proxy_domain=$(cat /etc/xray/proxy_domain 2>/dev/null || echo "")
 
 case "$proto" in
   vmess)  mark1="#vm"; mark2="#vmg"; dir="/etc/vmess"; field="id" ;;
@@ -21,9 +20,6 @@ esac
 
 # Emits every link variant (TLS/NTLS/gRPC/HTTPUpgrade/XHTTP for vmess & vless,
 # WS/gRPC for trojan — trojan has no httpupgrade/xhttp inbound configured).
-# When /etc/xray/proxy_domain is set, also emits a _VIA_PROXY twin of each
-# TLS-based link (address swapped to the proxy's domain; host/sni stay on
-# the real domain so TLS/cert matching on the backend is unaffected).
 emit_links() {
   local user="$1" secret="$2"
   case "$proto" in
@@ -38,16 +34,6 @@ emit_links() {
       echo "LINK_GRPC=vmess://$(echo -n "$j_grpc" | base64 -w0)"
       echo "LINK_UPGRADE=vmess://$(echo -n "$j_up" | base64 -w0)"
       echo "LINK_XHTTP=vmess://$(echo -n "$j_xh" | base64 -w0)"
-      if [ -n "$proxy_domain" ]; then
-        local pj_tls="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${proxy_domain}\",\"port\":\"443\",\"id\":\"${secret}\",\"aid\":\"0\",\"net\":\"ws\",\"path\":\"/vmess\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"tls\",\"sni\":\"${domain}\"}"
-        local pj_grpc="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${proxy_domain}\",\"port\":\"443\",\"id\":\"${secret}\",\"aid\":\"0\",\"net\":\"grpc\",\"path\":\"vmess-grpc\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"tls\",\"sni\":\"${domain}\"}"
-        local pj_up="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${proxy_domain}\",\"port\":\"443\",\"id\":\"${secret}\",\"aid\":\"0\",\"net\":\"httpupgrade\",\"path\":\"/vmess-up\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"tls\",\"sni\":\"${domain}\",\"alpn\":\"http/1.1\"}"
-        local pj_xh="{\"v\":\"2\",\"ps\":\"${user}\",\"add\":\"${proxy_domain}\",\"port\":\"443\",\"id\":\"${secret}\",\"aid\":\"0\",\"net\":\"xhttp\",\"path\":\"/vmess-xhttp\",\"type\":\"none\",\"host\":\"${domain}\",\"tls\":\"tls\",\"sni\":\"${domain}\",\"alpn\":\"h2,http/1.1\"}"
-        echo "LINK_TLS_VIA_PROXY=vmess://$(echo -n "$pj_tls" | base64 -w0)"
-        echo "LINK_GRPC_VIA_PROXY=vmess://$(echo -n "$pj_grpc" | base64 -w0)"
-        echo "LINK_UPGRADE_VIA_PROXY=vmess://$(echo -n "$pj_up" | base64 -w0)"
-        echo "LINK_XHTTP_VIA_PROXY=vmess://$(echo -n "$pj_xh" | base64 -w0)"
-      fi
       ;;
     vless)
       echo "LINK_TLS=vless://${secret}@${domain}:443?path=/vless&security=tls&encryption=none&host=${domain}&type=ws&sni=${domain}#${user}"
@@ -55,20 +41,10 @@ emit_links() {
       echo "LINK_GRPC=vless://${secret}@${domain}:443?mode=gun&security=tls&encryption=none&type=grpc&serviceName=vless-grpc&sni=${domain}#${user}"
       echo "LINK_UPGRADE=vless://${secret}@${domain}:443?path=/vless-up&security=tls&encryption=none&host=${domain}&type=httpupgrade&sni=${domain}&alpn=http/1.1#${user}"
       echo "LINK_XHTTP=vless://${secret}@${domain}:443?path=/vless-xhttp&security=tls&encryption=none&host=${domain}&type=xhttp&sni=${domain}&alpn=h2,http/1.1#${user}"
-      if [ -n "$proxy_domain" ]; then
-        echo "LINK_TLS_VIA_PROXY=vless://${secret}@${proxy_domain}:443?path=/vless&security=tls&encryption=none&host=${domain}&type=ws&sni=${domain}#${user}-viaproxy"
-        echo "LINK_GRPC_VIA_PROXY=vless://${secret}@${proxy_domain}:443?mode=gun&security=tls&encryption=none&type=grpc&serviceName=vless-grpc&sni=${domain}#${user}-viaproxy"
-        echo "LINK_UPGRADE_VIA_PROXY=vless://${secret}@${proxy_domain}:443?path=/vless-up&security=tls&encryption=none&host=${domain}&type=httpupgrade&sni=${domain}&alpn=http/1.1#${user}-viaproxy"
-        echo "LINK_XHTTP_VIA_PROXY=vless://${secret}@${proxy_domain}:443?path=/vless-xhttp&security=tls&encryption=none&host=${domain}&type=xhttp&sni=${domain}&alpn=h2,http/1.1#${user}-viaproxy"
-      fi
       ;;
     trojan)
       echo "LINK_WS=trojan://${secret}@${domain}:443?path=%2Ftrojan-ws&security=tls&host=${domain}&type=ws&sni=${domain}#${user}"
       echo "LINK_GRPC=trojan://${secret}@${domain}:443?mode=gun&security=tls&type=grpc&serviceName=trojan-grpc&sni=${domain}#${user}"
-      if [ -n "$proxy_domain" ]; then
-        echo "LINK_WS_VIA_PROXY=trojan://${secret}@${proxy_domain}:443?path=%2Ftrojan-ws&security=tls&host=${domain}&type=ws&sni=${domain}#${user}-viaproxy"
-        echo "LINK_GRPC_VIA_PROXY=trojan://${secret}@${proxy_domain}:443?mode=gun&security=tls&type=grpc&serviceName=trojan-grpc&sni=${domain}#${user}-viaproxy"
-      fi
       ;;
   esac
 }
