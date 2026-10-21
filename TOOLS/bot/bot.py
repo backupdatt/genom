@@ -519,6 +519,9 @@ def handle_backup(chat_id):
 LINK_LABELS = [
     ("LINK_TLS", "TLS (WS)"), ("LINK_NTLS", "NTLS (WS)"), ("LINK_GRPC", "gRPC"),
     ("LINK_UPGRADE", "HTTPUpgrade"), ("LINK_XHTTP", "XHTTP"), ("LINK_WS", "WS"),
+    ("LINK_TLS_VIA_PROXY", "TLS via Proxy"), ("LINK_GRPC_VIA_PROXY", "gRPC via Proxy"),
+    ("LINK_UPGRADE_VIA_PROXY", "HTTPUpgrade via Proxy"), ("LINK_XHTTP_VIA_PROXY", "XHTTP via Proxy"),
+    ("LINK_WS_VIA_PROXY", "WS via Proxy"),
 ]
 
 
