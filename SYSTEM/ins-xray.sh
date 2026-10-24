@@ -81,9 +81,31 @@ curl -s https://raw.githubusercontent.com/backupdatt/genom/refs/heads/main/SYSTE
 }
 END
 chmod 644 /etc/logrotate.d/xray
-# / / Ambil Xray Core Version Terbaru
-latest_version="$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases | grep tag_name | sed -E 's/.*"v(.*)".*/\1/' | head -n 1)"
+# / / Ambil Xray Core Version Terbaru STABLE
+# /releases (without /latest) lists every release including pre-releases
+# and withdrawn builds, newest-created first — not "newest stable". That's
+# how this install picked up v26.10.17, which XTLS pulled days later for
+# trusting compromised root CAs. /releases/latest is GitHub's own
+# stable-only, non-draft, non-prerelease pointer — use that instead.
+latest_version="$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases/latest | grep '"tag_name"' | sed -E 's/.*"v(.*)".*/\1/' | head -n 1)"
 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install --version $latest_version
+
+# install-release.sh resets its own 10-donot_touch_single_conf.conf drop-in
+# to the Xray-install default (-config /usr/local/etc/xray/config.json) on
+# every run, including re-runs for updates — but every script in this repo
+# (account.sh, expiry-enforce.sh, webapi.py, etc.) hardcodes /etc/xray.
+# Without this, every update silently points xray at an empty config
+# (no inbounds) until someone notices the outage. Keep it as a SEPARATE
+# drop-in file, per that file's own warning, so re-running this script
+# doesn't wipe it out again.
+mkdir -p /etc/systemd/system/xray.service.d
+cat > /etc/systemd/system/xray.service.d/20-genom-config-path.conf <<'EOF'
+[Service]
+ExecStart=
+ExecStart=/usr/local/bin/xray run -config /etc/xray/config.json
+EOF
+systemctl daemon-reload
+systemctl restart xray
 
 ## crt xray
 systemctl stop nginx
