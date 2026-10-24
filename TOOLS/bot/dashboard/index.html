@@ -330,6 +330,7 @@ pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--mut
     <nav class="sidebar-nav" id="nav">
       <button data-page="dashboard" class="nav-item"><span class="nav-icon">◆</span>Dashboard</button>
       <button data-page="akun" class="nav-item"><span class="nav-icon">◇</span>Akun</button>
+      <button data-page="expiring" class="nav-item"><span class="nav-icon">⏰</span>Akan Expired</button>
       <button data-page="restore" class="nav-item"><span class="nav-icon">♻</span>Restore</button>
       <button data-page="trial" class="nav-item"><span class="nav-icon">○</span>Trial</button>
       <button data-page="backup" class="nav-item"><span class="nav-icon">▣</span>Backup</button>
@@ -411,6 +412,22 @@ pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--mut
             </span>
           </span>
         </div>
+      </div>
+    </section>
+
+    <!-- Akan Expired -->
+    <section id="page-expiring" class="page hidden">
+      <div class="page-head">
+        <div><span class="eyebrow">Perlu perhatian</span><h1>Akan Expired (7 Hari)</h1></div>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">
+        Semua akun (VMess/VLess/Trojan) yang expired dalam 7 hari ke depan, diurut paling cepat dulu.
+      </div>
+      <div class="panel table-wrap" style="padding:0;">
+        <table>
+          <thead><tr><th>Proto</th><th>User</th><th>Expired</th><th>Status</th><th class="r">Aksi</th></tr></thead>
+          <tbody id="expiring-table"></tbody>
+        </table>
       </div>
     </section>
 
@@ -623,6 +640,7 @@ function showPage(name) {
     dashboardPollTimer = setInterval(loadDashboard, DASHBOARD_POLL_MS);
   }
   if (name === "akun") loadAccounts();
+  if (name === "expiring") loadExpiringSoon();
   if (name === "restore") loadArchived();
   if (name === "trial") loadTrialCards();
   if (name === "backup") loadBackupStatus();
@@ -663,6 +681,7 @@ async function loadDashboard() {
   const s = await api("GET", "/status");
   document.getElementById("footer-domain").textContent = s.DOMAIN || "-";
   document.getElementById("stat-cards").innerHTML = `
+    <div class="stat-card"><div class="k">IP VPS</div><div class="v" style="font-size:15px;">${s.IP || "-"}</div></div>
     <div class="stat-card"><div class="k">Uptime</div><div class="v">${s.UPTIME || "-"}</div></div>
     <div class="stat-card"><div class="k">RAM</div><div class="v">${s.RAM || "-"}</div></div>
     <div class="stat-card"><div class="k">CPU</div><div class="v">${s.CPU || "-"}</div></div>
@@ -863,6 +882,36 @@ document.getElementById("akun-pagesize").onchange = (e) => {
 };
 document.getElementById("akun-prev").onclick = () => { akunPage--; renderAkunTable(); };
 document.getElementById("akun-next").onclick = () => { akunPage++; renderAkunTable(); };
+
+// ---- Akan Expired ----
+const PROTO_LABEL = { vmess: "VMess", vless: "VLess", trojan: "Trojan" };
+
+async function loadExpiringSoon() {
+  const a = await api("GET", "/accounts");
+  const soon = (a.accounts || [])
+    .filter(r => r.days_left <= 7)
+    .sort((x, y) => x.days_left - y.days_left);
+  document.getElementById("expiring-table").innerHTML = soon.length ? soon.map(r => `
+    <tr>
+      <td>${PROTO_LABEL[r.proto] || r.proto}</td>
+      <td><code>${r.user}</code></td>
+      <td style="color:var(--muted);">${r.exp}</td>
+      <td>${badge(r.days_left)}</td>
+      <td class="r">
+        <button class="btn btn-primary btn-sm" onclick="doRenewExpiring('${r.proto}', '${r.user}')">Renew</button>
+      </td>
+    </tr>
+  `).join("") : `<tr class="empty-row"><td colspan="5">Gak ada akun yang expired dalam 7 hari ke depan. 🎉</td></tr>`;
+}
+
+async function doRenewExpiring(proto, user) {
+  const days = parseInt(prompt(`Renew "${user}" (${PROTO_LABEL[proto] || proto}) — tambah berapa hari?`, "30"));
+  if (!days || days <= 0) return;
+  const r = await api("POST", "/accounts/renew", { proto, user, extra_days: days });
+  if (!r.ok) return toast("Gagal renew: " + r.error, false);
+  toast(`Akun "${user}" diperpanjang ${days} hari (exp baru: ${r.NEW_EXP}).`, true);
+  loadExpiringSoon();
+}
 
 // ---- Restore ----
 let currentRestoreProto = "vmess";
