@@ -105,7 +105,10 @@ ExecStart=
 ExecStart=/usr/local/bin/xray run -config /etc/xray/config.json
 EOF
 systemctl daemon-reload
-systemctl restart xray
+# No restart here — the config.json this points at still gets rewritten
+# below (ad-block rule, TLS cert paths, etc.), so an immediate restart
+# would just be redundant with the one at the end of this script after
+# everything is in its final state.
 
 ## crt xray
 systemctl stop nginx
