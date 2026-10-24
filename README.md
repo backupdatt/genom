@@ -133,29 +133,32 @@ Kalau kamu gak butuh fitur backup ke Google Drive, skip bagian ini juga.
   OpenVPN — gak perlu diubah, cuma diingat itu email pribadi yang bakal
   kelihatan kalau repo-nya lagi dibuka Public.
 
-### 2.6 🚫 Ad-block buat Xray (vmess/vless/trojan) — udah aktif otomatis
+### 2.6 🚫 Ad-block + anti-telemetry buat Xray (vmess/vless/trojan) — udah aktif otomatis
 
-Fresh install (STEP 1) sekarang otomatis blokir domain-domain iklan umum
-(pakai `geosite:category-ads-all`, daftar resmi dari Xray-core) buat semua
-protokol berbasis Xray — vmess, vless, DAN trojan, karena ketiganya share
-1 `config.json` yang sama. **Gak ada yang perlu kamu isi**, otomatis aktif.
+Fresh install (STEP 1) sekarang otomatis blokir domain-domain iklan DAN
+tracking/telemetry umum (pakai `geosite:category-ads-all` +
+`geosite:category-ads-and-telemetry`, dua-duanya daftar resmi dari
+Xray-core) buat semua protokol berbasis Xray — vmess, vless, DAN trojan,
+karena ketiganya share 1 `config.json` yang sama. **Gak ada yang perlu
+kamu isi**, otomatis aktif.
 
 Catatan:
 - Ini **cuma berlaku ke vmess/vless/trojan**. User SSH murni (dropbear/
   OpenSSH) gak lewat Xray sama sekali, jadi gak ikut kena blokir ini —
   belum ditangani, di luar scope saat ini.
-- Yang diblokir cuma domain ads dari daftar resmi tadi (iklan di
-  web/app/YouTube dkk). Kalau ada iklan ISP yang nyuntik ke traffic HTTP
-  biasa (bukan ini soalnya), itu otomatis ilang sendiri karena semua
-  traffic vmess/vless/trojan/SSH udah terenkripsi — ISP gak bisa baca
-  apalagi nyisipin apa-apa ke dalamnya.
+- Yang diblokir cuma domain ads/telemetry dari daftar resmi tadi (iklan
+  di web/app/YouTube dkk + domain analytics/tracking perusahaan). Kalau
+  ada iklan ISP yang nyuntik ke traffic HTTP biasa (bukan ini soalnya),
+  itu otomatis ilang sendiri karena semua traffic vmess/vless/trojan/SSH
+  udah terenkripsi — ISP gak bisa baca apalagi nyisipin apa-apa ke
+  dalamnya.
 - **Buat VPS yang udah jalan dari SEBELUM fitur ini ada**, tambahin manual
   di VPS: edit `/etc/xray/config.json`, taruh blok ini jadi rule PERTAMA
   di dalam `"routing": { "rules": [ ... ] }` (sebelum rule lain):
   ```json
   {
     "type": "field",
-    "domain": ["geosite:category-ads-all"],
+    "domain": ["geosite:category-ads-all", "geosite:category-ads-and-telemetry"],
     "outboundTag": "blocked"
   },
   ```

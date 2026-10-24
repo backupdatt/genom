@@ -436,7 +436,8 @@ cat > /etc/xray/config.json << END
       {
         "type": "field",
         "domain": [
-          "geosite:category-ads-all"
+          "geosite:category-ads-all",
+          "geosite:category-ads-and-telemetry"
         ],
         "outboundTag": "blocked"
       },

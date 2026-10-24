@@ -13,6 +13,9 @@ Dulu akun expired langsung dihapus permanen tanpa jalan balik, ketauan masalahny
 #### 🐛 Fixed — Traceback panjang di log webapi gara-gara klien disconnect
 Klien yang nutup koneksi di tengah request bikin traceback 20-baris nongol di log, padahal itu perilaku normal bukan bug. Sekarang dibungkus jadi 1 baris log yang jelas.
 
+#### ✨ Added — Ad-block diperluas: blokir domain telemetry/tracking juga
+`category-ads-all` yang udah ada cuma nutup domain iklan; ditambah `geosite:category-ads-and-telemetry` di rule yang sama biar domain tracking/analytics (Google Analytics, dst) ikut keblokir. Otomatis berlaku ke semua akun vmess/vless/trojan yang ada (bukan per-akun), diverifikasi lewat simulasi client asli: domain normal tetap lolos, domain tracker (`google-analytics.com`) kebukti keblokir.
+
 ### [2026-10-24]
 
 #### ⚠️ Dicoba lalu di-revert — Proxy front-door + full-proxy egress buat anti-block Netflix
