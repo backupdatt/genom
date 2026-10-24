@@ -330,6 +330,7 @@ pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--mut
     <nav class="sidebar-nav" id="nav">
       <button data-page="dashboard" class="nav-item"><span class="nav-icon">◆</span>Dashboard</button>
       <button data-page="akun" class="nav-item"><span class="nav-icon">◇</span>Akun</button>
+      <button data-page="restore" class="nav-item"><span class="nav-icon">♻</span>Restore</button>
       <button data-page="trial" class="nav-item"><span class="nav-icon">○</span>Trial</button>
       <button data-page="backup" class="nav-item"><span class="nav-icon">▣</span>Backup</button>
       <button data-page="tools" class="nav-item"><span class="nav-icon">▤</span>Server Tools</button>
@@ -410,6 +411,27 @@ pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--mut
             </span>
           </span>
         </div>
+      </div>
+    </section>
+
+    <!-- Restore -->
+    <section id="page-restore" class="page hidden">
+      <div class="page-head">
+        <div><span class="eyebrow">Jaring pengaman</span><h1>Restore Akun</h1></div>
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">
+        Akun yang expired disimpan di sini selama 7 hari sebelum beneran dihapus permanen — UUID/secretnya sama seperti sebelumnya.
+      </div>
+      <div class="tabs" id="restore-tabs">
+        <button data-proto="vmess" class="restore-proto-tab tab">VMess</button>
+        <button data-proto="vless" class="restore-proto-tab tab">VLess</button>
+        <button data-proto="trojan" class="restore-proto-tab tab">Trojan</button>
+      </div>
+      <div class="panel table-wrap" style="padding:0;">
+        <table>
+          <thead><tr><th>User</th><th>Expired (dulu)</th><th>Dihapus Pada</th><th class="r">Aksi</th></tr></thead>
+          <tbody id="restore-table"></tbody>
+        </table>
       </div>
     </section>
 
@@ -601,6 +623,7 @@ function showPage(name) {
     dashboardPollTimer = setInterval(loadDashboard, DASHBOARD_POLL_MS);
   }
   if (name === "akun") loadAccounts();
+  if (name === "restore") loadArchived();
   if (name === "trial") loadTrialCards();
   if (name === "backup") loadBackupStatus();
   if (name === "logs") loadLogTabs();
@@ -840,6 +863,48 @@ document.getElementById("akun-pagesize").onchange = (e) => {
 };
 document.getElementById("akun-prev").onclick = () => { akunPage--; renderAkunTable(); };
 document.getElementById("akun-next").onclick = () => { akunPage++; renderAkunTable(); };
+
+// ---- Restore ----
+let currentRestoreProto = "vmess";
+let archivedCache = [];
+
+document.querySelectorAll(".restore-proto-tab").forEach(b => b.onclick = () => {
+  currentRestoreProto = b.dataset.proto;
+  document.querySelectorAll(".restore-proto-tab").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  loadArchived();
+});
+
+async function loadArchived() {
+  document.querySelectorAll(".restore-proto-tab").forEach(x => {
+    x.classList.toggle("active", x.dataset.proto === currentRestoreProto);
+  });
+  const r = await api("POST", "/accounts/archived", { proto: currentRestoreProto });
+  archivedCache = r.archived || [];
+  renderRestoreTable();
+}
+
+function renderRestoreTable() {
+  document.getElementById("restore-table").innerHTML = archivedCache.length ? archivedCache.map(a => `
+    <tr>
+      <td><code>${a.user}</code></td>
+      <td style="color:var(--muted);">${a.exp}</td>
+      <td style="color:var(--muted);">${a.deleted_at}</td>
+      <td class="r">
+        <button class="btn btn-primary btn-sm" onclick="doRestore('${a.user}')">Restore</button>
+      </td>
+    </tr>
+  `).join("") : `<tr class="empty-row"><td colspan="4">Tidak ada akun ${currentRestoreProto} yang bisa di-restore.</td></tr>`;
+}
+
+async function doRestore(user) {
+  const days = parseInt(prompt(`Restore "${user}" dengan masa aktif berapa hari?`, "7"));
+  if (!days || days <= 0) return;
+  const r = await api("POST", "/accounts/restore", { proto: currentRestoreProto, user, days });
+  if (!r.ok) return toast("Gagal restore: " + r.error, false);
+  toast(`Akun "${user}" direstore, aktif ${days} hari (exp ${r.EXP}).`, true);
+  loadArchived();
+}
 
 async function doInfo(user) {
   const r = await api("POST", "/accounts/info", { proto: currentProto, user });

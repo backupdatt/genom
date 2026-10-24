@@ -6,8 +6,11 @@
 #   account.sh info   <vmess|vless|trojan> <user>
 #   account.sh renew  <vmess|vless|trojan> <user> <extra_days>
 #   account.sh limit  <vmess|vless|trojan> <user> <quota_gb> <ip_limit>
+#   account.sh archived <vmess|vless|trojan>              -> list restorable accounts for that protocol
+#   account.sh restore  <vmess|vless|trojan> <user> [days] -> bring an archived account back (default 7 days)
 set -e
 CONFIG="/etc/xray/config.json"
+ARCHIVE_LOG="/etc/xray-archive/archive.log"
 action="$1"; proto="$2"
 domain=$(cat /etc/xray/domain 2>/dev/null || echo "N/A")
 
@@ -204,6 +207,61 @@ limit)
   echo "USER=${user}"
   echo "QUOTA=${quota}"
   echo "IPLIM=${iplim}"
+  ;;
+
+archived)
+  grep -E "^${proto} " "$ARCHIVE_LOG" 2>/dev/null | while read -r aproto auser asecret aexp adeleted; do
+    echo "ARCHIVED=${auser}|${aexp}|${adeleted}"
+  done
+  ;;
+
+restore)
+  user="$3"; days="${4:-7}"
+  [[ "$days" =~ ^[0-9]+$ ]] || days=7
+
+  if grep -qw "$user" "$CONFIG"; then
+    echo "USER_EXISTS"
+    exit 2
+  fi
+
+  line=$(grep -E "^${proto} ${user} " "$ARCHIVE_LOG" 2>/dev/null | tail -1)
+  if [ -z "$line" ]; then
+    echo "NOTFOUND"
+    exit 2
+  fi
+  uuid=$(echo "$line" | awk '{print $3}')
+  exp=$(date -d "$days days" +"%Y-%m-%d")
+
+  if [ "$field" = "password" ]; then
+    sed -i "/#trojanws\$/a\\${mark1} ${user} ${exp} ${uuid}\\
+},{\"password\": \"${uuid}\",\"email\": \"${user}\"" "$CONFIG"
+    sed -i "/#trojangrpc\$/a\\${mark2} ${user} ${exp}\\
+},{\"password\": \"${uuid}\",\"email\": \"${user}\"" "$CONFIG"
+  elif [ "$proto" = "vless" ]; then
+    sed -i "/#vless\$/a\\${mark1} ${user} ${exp} ${uuid}\\
+},{\"id\": \"${uuid}\",\"email\": \"${user}\"" "$CONFIG"
+    sed -i "/#vlessgrpc\$/a\\${mark2} ${user} ${exp}\\
+},{\"id\": \"${uuid}\",\"email\": \"${user}\"" "$CONFIG"
+  else
+    sed -i "/#vmess\$/a\\${mark1} ${user} ${exp}\\
+},{\"id\": \"${uuid}\",\"alterId\": 0,\"email\": \"${user}\"" "$CONFIG"
+    sed -i "/#vmessgrpc\$/a\\${mark2} ${user} ${exp} ${uuid}\\
+},{\"id\": \"${uuid}\",\"alterId\": 0,\"email\": \"${user}\"" "$CONFIG"
+  fi
+
+  # Drop this entry from the archive now that it's live again. grep -v exits
+  # 1 (not an error here) when the filtered result is empty, e.g. restoring
+  # the only archived account — don't let that skip the mv.
+  grep -v -E "^${proto} ${user} ${uuid} " "$ARCHIVE_LOG" > "${ARCHIVE_LOG}.tmp" 2>/dev/null || true
+  mv "${ARCHIVE_LOG}.tmp" "$ARCHIVE_LOG"
+
+  systemctl restart xray >/dev/null 2>&1
+
+  echo "USER=${user}"
+  echo "SECRET=${uuid}"
+  echo "EXP=${exp}"
+  echo "DOMAIN=${domain}"
+  emit_links "$user" "$uuid"
   ;;
 
 *)

@@ -144,6 +144,27 @@ def h_account_info(req):
     return {"ok": True, **parse_kv(out)}
 
 
+def h_account_archived(req):
+    b = req["body"]
+    out, rc = run_script("account.sh", "archived", b["proto"])
+    archived = []
+    for line in out.splitlines():
+        if line.startswith("ARCHIVED="):
+            user, exp, deleted_at = line[len("ARCHIVED="):].split("|")
+            archived.append({"user": user, "exp": exp, "deleted_at": deleted_at})
+    return {"ok": True, "archived": archived}
+
+
+def h_account_restore(req):
+    b = req["body"]
+    out, rc = run_script("account.sh", "restore", b["proto"], b["user"], b.get("days", 7))
+    if "NOTFOUND" in out:
+        return {"ok": False, "error": "not in archive (expired >7 days ago or never expired)"}
+    if "USER_EXISTS" in out:
+        return {"ok": False, "error": "an active account with this name already exists"}
+    return {"ok": True, **parse_kv(out)}
+
+
 TRIAL_SCRIPTS = {
     "vmess": "trial-vmess.sh",
     "vless": "trial-vless.sh",
@@ -252,6 +273,8 @@ ROUTES = {
     ("POST", "/dashboard/api/accounts/renew"): h_account_renew,
     ("POST", "/dashboard/api/accounts/limit"): h_account_limit,
     ("POST", "/dashboard/api/accounts/info"): h_account_info,
+    ("POST", "/dashboard/api/accounts/archived"): h_account_archived,
+    ("POST", "/dashboard/api/accounts/restore"): h_account_restore,
     ("POST", "/dashboard/api/trial"): h_trial,
     ("POST", "/dashboard/api/backup/now"): h_backup_now,
     ("GET", "/dashboard/api/backup/schedule"): h_backup_schedule_get,

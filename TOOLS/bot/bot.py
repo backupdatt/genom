@@ -109,7 +109,8 @@ MAIN_MENU = [
      {"text": "🔍 Cek Akun", "callback_data": "info_proto"}],
     [{"text": "🔁 Renew Akun", "callback_data": "renew_proto"},
      {"text": "🗑️ Hapus Akun", "callback_data": "del_proto"}],
-    [{"text": "⚙️ Atur Limit Akun", "callback_data": "limit_proto"}],
+    [{"text": "⚙️ Atur Limit Akun", "callback_data": "limit_proto"},
+     {"text": "♻️ Restore Akun", "callback_data": "restore_proto"}],
     [{"text": "🔄 Restart Xray", "callback_data": "restart_xray"},
      {"text": "💾 Backup Sekarang", "callback_data": "backup_now"}],
     [{"text": "🛠️ Server Tools", "callback_data": "tools_menu"}],
@@ -253,6 +254,15 @@ def renew_days_picker(proto, user):
     ]
 
 
+def restore_days_picker(proto, user):
+    return [
+        [{"text": "7 Hari", "callback_data": f"rs_{proto}_{user}_7"},
+         {"text": "30 Hari", "callback_data": f"rs_{proto}_{user}_30"},
+         {"text": "90 Hari", "callback_data": f"rs_{proto}_{user}_90"}],
+        [{"text": "⬅️ Kembali", "callback_data": f"restorelist_{proto}"}],
+    ]
+
+
 def limit_quota_picker(proto, user):
     return [
         [{"text": "Unlimited", "callback_data": f"lq_{proto}_{user}_0"},
@@ -331,6 +341,39 @@ def account_list_menu(chat_id, proto, action, page=0):
     send_message(
         chat_id,
         f"{verb} Akun {PROTO_LABEL[proto]} — {len(entries)} total, halaman {page+1}/{total_pages}:",
+        rows,
+    )
+
+
+def archived_list_menu(chat_id, proto, page=0):
+    out, rc = run_script("account.sh", "archived", proto, timeout=30)
+    entries = []  # (user, orig_exp, deleted_at)
+    for line in out.splitlines():
+        if line.startswith("ARCHIVED="):
+            user, exp, deleted_at = line[len("ARCHIVED="):].split("|")
+            entries.append((user, exp, deleted_at))
+
+    if not entries:
+        send_message(chat_id, f"Tidak ada akun {PROTO_LABEL[proto]} yang bisa di-restore.", BACK_BTN)
+        return
+
+    entries.sort(key=lambda e: e[2], reverse=True)
+    total_pages = max(1, (len(entries) + LIST_PAGE_SIZE - 1) // LIST_PAGE_SIZE)
+    page = max(0, min(page, total_pages - 1))
+    chunk = entries[page * LIST_PAGE_SIZE:(page + 1) * LIST_PAGE_SIZE]
+
+    rows = [[{"text": f"{u} (exp {e} dulu)", "callback_data": f"restore_{proto}_{u}"}] for u, e, d in chunk]
+    nav = []
+    if page > 0:
+        nav.append({"text": "⬅️ Prev", "callback_data": f"restorepage_{proto}_{page-1}"})
+    if page < total_pages - 1:
+        nav.append({"text": "Next ➡️", "callback_data": f"restorepage_{proto}_{page+1}"})
+    if nav:
+        rows.append(nav)
+    rows.append([{"text": "⬅️ Kembali", "callback_data": "back"}])
+    send_message(
+        chat_id,
+        f"♻️ Restore Akun {PROTO_LABEL[proto]} — {len(entries)} bisa di-restore, halaman {page+1}/{total_pages}:",
         rows,
     )
 
@@ -601,6 +644,27 @@ def handle_renew_account(chat_id, proto, user, extra_days):
         f"📅 Exp Lama : {d.get('OLD_EXP','?')}\n"
         f"📅 Exp Baru : {d.get('NEW_EXP','?')}\n"
         f"➕ Tambahan : {d.get('EXTRA_DAYS','?')} hari"
+    )
+    send_message(chat_id, text, BACK_BTN)
+
+
+def handle_restore_account(chat_id, proto, user, days):
+    out, rc = run_script("account.sh", "restore", proto, user, days, timeout=30)
+    if "NOTFOUND" in out:
+        send_message(chat_id, "❌ Akun tidak ada di arsip (sudah lewat 7 hari / belum pernah expired).", BACK_BTN)
+        return
+    if "USER_EXISTS" in out:
+        send_message(chat_id, "❌ Akun aktif dengan nama ini sudah ada.", BACK_BTN)
+        return
+    d = parse_kv(out)
+    text = (
+        f"♻️ <b>Akun {PROTO_LABEL[proto]} Direstore</b>\n"
+        "━━━━━━━━━━━━━━━━━━\n"
+        f"👤 User  : <code>{d.get('USER','?')}</code>\n"
+        f"🔑 Secret: <code>{d.get('SECRET','?')}</code> (sama seperti sebelum expired)\n"
+        f"📅 Exp Baru : {d.get('EXP','?')}\n"
+        "━━━━━━━━━━━━━━━━━━\n"
+        f"🔗 <b>Link ({PROTO_LABEL[proto]})</b>\n\n{format_links(d)}"
     )
     send_message(chat_id, text, BACK_BTN)
 
@@ -879,6 +943,23 @@ def main():
                     quota = parts[-2]
                     user = "_".join(parts[2:-2])
                     handle_set_limit(chat_id, proto, user, quota, iplim)
+                elif data == "restore_proto":
+                    send_message(chat_id, "♻️ <b>Restore Akun</b>\nPilih protokol:", proto_picker("restorelist"))
+                elif data.startswith("restorelist_"):
+                    proto = data.split("_", 1)[1]
+                    archived_list_menu(chat_id, proto)
+                elif data.startswith("restorepage_"):
+                    _, proto, page = data.split("_")
+                    archived_list_menu(chat_id, proto, page=int(page))
+                elif data.startswith("restore_") and not data.startswith("restore_proto"):
+                    _, proto, user = data.split("_", 2)
+                    send_message(chat_id, f"⏳ Restore <code>{user}</code> dengan masa aktif berapa hari?", restore_days_picker(proto, user))
+                elif data.startswith("rs_"):
+                    parts = data.split("_")
+                    proto = parts[1]
+                    days = parts[-1]
+                    user = "_".join(parts[2:-1])
+                    handle_restore_account(chat_id, proto, user, days)
 
 
 if __name__ == "__main__":
