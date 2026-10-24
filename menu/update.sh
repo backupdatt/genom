@@ -150,7 +150,7 @@ wget -q -O /usr/bin/online-trojan "https://github.com/backupdatt/genom/raw/refs/
 wget -q -O /usr/bin/online-sshws "https://github.com/backupdatt/genom/raw/refs/heads/main/online-sshws" && chmod +x /usr/bin/online-sshws
 wget -q -O /usr/bin/update-usage "https://github.com/backupdatt/genom/raw/refs/heads/main/menu/update-usage" && chmod +x /usr/bin/update-usage
 wget -q -O /usr/bin/update-ssh-usage "https://github.com/backupdatt/genom/raw/refs/heads/main/menu/update-ssh-usage.sh" && chmod +x /usr/bin/update-ssh-usage
-wget -q -O /usr/bin/xp "https://raw.githubusercontent.com/backupdatt/genom/refs/heads/main/menu/xp" && chmod +x /usr/bin/xp
+wget -q -O /usr/bin/xp "https://raw.githubusercontent.com/backupdatt/genom/refs/heads/main/SYSTEM/xp.sh" && chmod +x /usr/bin/xp
 
 clear
 echo -e ""

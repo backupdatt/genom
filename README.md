@@ -378,13 +378,7 @@ akar masalahnya:
 | 8 | Nginx cuma pakai 1 inti CPU buat semua trafik → jadi bottleneck pas banyak orang pakai bersamaan | `SYSTEM/nginx.conf` | Diubah pakai semua inti CPU yang tersedia |
 | 9 | Proxy websocket bikin 1 "pekerja" baru buat tiap koneksi masuk tanpa batas → RAM naik terus sesuai jumlah koneksi | `WEBSOCKET/ws-dropbear`, `ws-ovpn.py`, `ws-stunnel` | Ditambah batas maksimal 1500 koneksi |
 | 10 | Token lisensi (`GH_TOKEN`) kalau ditulis langsung di 11 file menu, ketimpa jadi placeholder lagi tiap `update.sh` jalan | `11 file menu lisensi` | Token dipisah ke `/etc/xray/license.conf` di VPS, gak ikut di-refresh |
-
-**Diketahui tapi SENGAJA belum dibenerin (keputusan ditunda):**
-- `menu/update.sh` menarik `/usr/bin/xp` dari `menu/xp` (script hapus-user
-  biasa), bukan dari `SYSTEM/xp.sh` (versi yang fix #5 di atas). Kalau
-  `update.sh` pernah dijalankan di VPS yang sebelumnya sudah dipasangi fix
-  #5 secara manual (STEP 3), fix itu **akan ketimpa balik**. Belum
-  diperbaiki karena `update.sh` sengaja belum disentuh untuk sementara.
+| 11 | `menu/update.sh` menarik `/usr/bin/xp` dari `menu/xp` (versi lama, restart Xray 3x), bukan dari `SYSTEM/xp.sh` (versi fix #5) — kalau `update.sh` dijalankan di VPS yang sebelumnya udah dipasangi fix #5 manual, fix itu ketimpa balik | `menu/update.sh` | Diganti narik dari `SYSTEM/xp.sh`, `menu/xp` (file lama) dihapus dari repo |
 
 **Yang sengaja belum dibenerin** (dampaknya kecil karena dipanggil manual,
 bukan jadwal otomatis): beberapa menu cek status online (`online-trojan`,

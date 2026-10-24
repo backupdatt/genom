@@ -16,6 +16,9 @@ Klien yang nutup koneksi di tengah request bikin traceback 20-baris nongol di lo
 #### ✨ Added — Ad-block diperluas: blokir domain telemetry/tracking juga
 `category-ads-all` yang udah ada cuma nutup domain iklan; ditambah `geosite:category-ads-and-telemetry` di rule yang sama biar domain tracking/analytics (Google Analytics, dst) ikut keblokir. Otomatis berlaku ke semua akun vmess/vless/trojan yang ada (bukan per-akun), diverifikasi lewat simulasi client asli: domain normal tetap lolos, domain tracker (`google-analytics.com`) kebukti keblokir.
 
+#### 🐛 Fixed — `menu/update.sh` nimpa balik fix "restart Xray 3x" yang udah ditunda dari 20 Oktober
+Known issue lama yang sengaja ditunda akhirnya dibenerin: `update.sh` ternyata masih narik `/usr/bin/xp` dari `menu/xp` (versi lama, 3x restart), bukan `SYSTEM/xp.sh`. Dicek di server sendiri — ketauan `/usr/bin/xp` kita emang udah ketimpa balik jadi versi 3x restart (jalan tiap tengah malam via cron), langsung dibenerin manual + source URL di `update.sh` diganti ke `SYSTEM/xp.sh`, dan `menu/xp` (file lama) dihapus dari repo karena udah gak dipakai sama sekali.
+
 ### [2026-10-24]
 
 #### ⚠️ Dicoba lalu di-revert — Proxy front-door + full-proxy egress buat anti-block Netflix
