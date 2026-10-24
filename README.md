@@ -396,6 +396,17 @@ pihak ketiga).
 
 Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
+### [2026-10-25]
+
+#### 🔒 Security — Xray kepasang versi yang ditarik XTLS, update ke stable
+Versi xray di VPS (`26.10.17`) ternyata udah ditarik XTLS karena ikut percaya sertifikat yang private key-nya kebobol; `SYSTEM/ins-xray.sh` juga ketauan ambil versi dari endpoint GitHub yang gak dijamin stable, sekarang difix. Pas update ke `26.10.21`, ketemu bug installer resmi yang reset path config xray ke lokasi kosong (langsung diperbaiki + dibikin otomatis-kefix di script biar gak kejadian lagi).
+
+#### ✨ Added — Restore akun expired (CLI, Telegram bot, web dashboard)
+Dulu akun expired langsung dihapus permanen tanpa jalan balik, ketauan masalahnya pas 1 akun customer kehapus gak sengaja. Sekarang `expiry-enforce.sh` arsipkan dulu selama 7 hari sebelum beneran dihapus, dan bisa di-restore pakai UUID yang sama lewat CLI, bot Telegram, atau dashboard web.
+
+#### 🐛 Fixed — Traceback panjang di log webapi gara-gara klien disconnect
+Klien yang nutup koneksi di tengah request bikin traceback 20-baris nongol di log, padahal itu perilaku normal bukan bug. Sekarang dibungkus jadi 1 baris log yang jelas.
+
 ### [2026-10-21]
 
 #### ✨ Added — Pemakaian bandwidth: hari ini/kemarin/bulan ini (per-akun & server)
