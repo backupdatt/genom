@@ -291,12 +291,19 @@ ROUTES = {
 
 class Handler(BaseHTTPRequestHandler):
     def _send_json(self, obj, status=200):
+        # The client (browser tab closed, page refreshed mid-request, etc.)
+        # can drop the connection before we finish writing — that's not a
+        # bug on our end, so log it as one short line instead of letting
+        # the raw BrokenPipeError/ConnectionResetError traceback through.
         body = json.dumps(obj).encode()
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError):
+            print(f"[webapi] {self.address_string()} client disconnected before response ({self.path})")
 
     def _dispatch(self, method):
         path = self.path.split("?", 1)[0]
@@ -314,9 +321,11 @@ class Handler(BaseHTTPRequestHandler):
                 body = {}
         try:
             result = handler({"body": body})
-            self._send_json(result)
         except Exception as e:
+            print(f"[webapi] {self.address_string()} handler error on {path}: {e}")
             self._send_json({"ok": False, "error": str(e)}, 500)
+            return
+        self._send_json(result)
 
     def do_GET(self):
         self._dispatch("GET")
