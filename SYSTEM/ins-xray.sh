@@ -472,14 +472,6 @@ cat > /etc/xray/config.json << END
       "settings": {}
     },
     {
-      "tag": "netflix-ipv4-only",
-      "protocol": "freedom",
-      "settings": {},
-      "streamSettings": {
-        "sockopt": { "domainStrategy": "ForceIPv4" }
-      }
-    },
-    {
       "protocol": "blackhole",
       "settings": {},
       "tag": "blocked"
@@ -487,18 +479,6 @@ cat > /etc/xray/config.json << END
   ],
   "routing": {
     "rules": [
-      {
-        "type": "field",
-        "domain": [
-          "netflix.com",
-          "netflix.net",
-          "nflxext.com",
-          "nflximg.net",
-          "nflxso.net",
-          "nflxvideo.net"
-        ],
-        "outboundTag": "netflix-ipv4-only"
-      },
       {
         "type": "field",
         "domain": [
@@ -612,7 +592,7 @@ server {
              listen 8080;
              listen [::]:8080;
              listen 443 ssl http2 reuseport;
-             listen [::]:443 http2 reuseport;
+             listen [::]:443 ssl http2 reuseport;
              server_name *.$domain;
              ssl_certificate /etc/xray/xray.crt;
              ssl_certificate_key /etc/xray/xray.key;

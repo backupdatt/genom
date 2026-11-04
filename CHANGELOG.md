@@ -13,6 +13,15 @@ Nambah 1 varian koneksi baru di samping TLS/NTLS/gRPC/HTTPUpgrade/XHTTP yang uda
 #### 🐛 Fixed — HTTPUpgrade & XHTTP (vless) drift dari `account.sh`
 Ketauan pas nambah REALITY: `account.sh` ternyata cuma pernah sync ke 2 dari 4 inbound vless (WS & gRPC), jadi 8 akun gak pernah kebagian entry di inbound HTTPUpgrade/XHTTP-nya — link itu kemungkinan gak connect buat mereka. 8 akun itu di-backfill manual, dan `account.sh` (create/restore/delete) sekarang sync ke semua 5 inbound vless sekaligus biar gak drift lagi.
 
+#### 🐛 Fixed — nginx `listen [::]:443` ketinggalan `ssl`, bikin TLS gagal lewat IPv6
+Ketauan pas pindah ke VPS yang punya IPv6 asli: listener IPv6 di port 443 nerima koneksi sebagai plain HTTP (bukan TLS) karena keyword `ssl` gak ada di baris itu, bikin dashboard & semua link vless gagal connect lewat IPv6 (`SEC_E_INVALID_TOKEN`/`wrong version number`). Bug ini udah ada dari lama tapi gak pernah ketauan karena server-server sebelumnya gak punya IPv6; dibenerin di `SYSTEM/ins-xray.sh` biar instalasi baru ke depan gak kena bug yang sama.
+
+#### 🔙 Removed — Rule "Netflix dipaksa IPv4" (gak jadi dipakai)
+Rule ini (ditambah hari ini juga, lihat entri sebelumnya) buat jaga-jaga andai IPv6 nanti salah kebaca negara. Ternyata IPv6 yang beneran dipasang kebaca BENAR sebagai Indonesia sama Netflix sendiri, jadi rule-nya dicabut lagi — Netflix sekarang bebas lewat IPv4 atau IPv6 (dual-stack normal) seperti domain lain.
+
+#### 🐛 Fixed — `online.sh` gak kebaca client yang connect lewat IPv6
+Regex ekstraksi IP di `online.sh` (buat "Online Now") cuma ngenalin format IPv4 — user yang connect lewat IPv6 tetep kedetek online (itu berdasar timestamp log), tapi kolom IP/city/ISP-nya kosong. Sekarang bisa baca IPv6 yang dibungkus kurung siku (`[2001:db8::1]:port`) juga, termasuk filter private-range IPv6-nya (`lib-ipinfo.sh`).
+
 #### 🔒 Added — Rule routing: Netflix dipaksa IPv4 (jaga-jaga buat IPv6 nanti)
 Sambil diskusi soal nambah IPv6 di VPS (belum ada sekarang), ketemu resiko: kalau IPv6 nanti aktif tapi blok-nya kebaca negara salah sama Netflix, klien bakal prefer IPv6 (Happy Eyeballs) dan nentuin library dari situ — walau IPv4-nya udah bener. Dipasang rule + outbound `netflix-ipv4-only` (`domainStrategy: ForceIPv4`) buat domain Netflix sekarang juga, sebelum IPv6 beneran ada, biar otomatis aman duluan.
 
