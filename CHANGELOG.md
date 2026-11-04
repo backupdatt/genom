@@ -13,6 +13,9 @@ Nambah 1 varian koneksi baru di samping TLS/NTLS/gRPC/HTTPUpgrade/XHTTP yang uda
 #### 🐛 Fixed — HTTPUpgrade & XHTTP (vless) drift dari `account.sh`
 Ketauan pas nambah REALITY: `account.sh` ternyata cuma pernah sync ke 2 dari 4 inbound vless (WS & gRPC), jadi 8 akun gak pernah kebagian entry di inbound HTTPUpgrade/XHTTP-nya — link itu kemungkinan gak connect buat mereka. 8 akun itu di-backfill manual, dan `account.sh` (create/restore/delete) sekarang sync ke semua 5 inbound vless sekaligus biar gak drift lagi.
 
+#### 🔒 Added — Rule routing: Netflix dipaksa IPv4 (jaga-jaga buat IPv6 nanti)
+Sambil diskusi soal nambah IPv6 di VPS (belum ada sekarang), ketemu resiko: kalau IPv6 nanti aktif tapi blok-nya kebaca negara salah sama Netflix, klien bakal prefer IPv6 (Happy Eyeballs) dan nentuin library dari situ — walau IPv4-nya udah bener. Dipasang rule + outbound `netflix-ipv4-only` (`domainStrategy: ForceIPv4`) buat domain Netflix sekarang juga, sebelum IPv6 beneran ada, biar otomatis aman duluan.
+
 ### [2026-10-25]
 
 #### 🔒 Security — Xray kepasang versi yang ditarik XTLS, update ke stable

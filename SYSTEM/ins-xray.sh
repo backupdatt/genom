@@ -472,6 +472,14 @@ cat > /etc/xray/config.json << END
       "settings": {}
     },
     {
+      "tag": "netflix-ipv4-only",
+      "protocol": "freedom",
+      "settings": {},
+      "streamSettings": {
+        "sockopt": { "domainStrategy": "ForceIPv4" }
+      }
+    },
+    {
       "protocol": "blackhole",
       "settings": {},
       "tag": "blocked"
@@ -479,6 +487,18 @@ cat > /etc/xray/config.json << END
   ],
   "routing": {
     "rules": [
+      {
+        "type": "field",
+        "domain": [
+          "netflix.com",
+          "netflix.net",
+          "nflxext.com",
+          "nflximg.net",
+          "nflxso.net",
+          "nflxvideo.net"
+        ],
+        "outboundTag": "netflix-ipv4-only"
+      },
       {
         "type": "field",
         "domain": [

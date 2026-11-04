@@ -164,6 +164,19 @@ Catatan:
   ```
   Lalu `systemctl restart xray`.
 
+### 2.7 🔒 Netflix dipaksa lewat IPv4 — jaga-jaga buat kalau VPS nanti dapet IPv6
+
+VPS ini belum punya IPv6, tapi rule ini udah dipasang dari sekarang biar
+siap kalau suatu saat IPv6 nyala (native dari provider atau tunnel
+broker). Alasannya: kalau dual-stack aktif tapi blok IPv6-nya kebaca
+negara yang salah sama database geolocation Netflix, device klien bakal
+prefer IPv6 duluan (Happy Eyeballs) dan nentuin library Netflix dari situ
+— walau IPv4-nya udah bener kebaca Indonesia. Rule ini maksa domain
+Netflix (`netflix.com`, `nflxvideo.net`, dkk) selalu lewat outbound
+`netflix-ipv4-only` (`sockopt.domainStrategy: "ForceIPv4"`), gak pernah
+kebagian jalur IPv6 sama sekali — domain lain tetap bebas dual-stack
+kalau IPv6 udah tersedia.
+
 ---
 
 ## STEP 3: Pasang perbaikan anti-hang ke VPS (cuma buat VPS LAMA)
