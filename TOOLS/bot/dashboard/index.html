@@ -206,6 +206,13 @@ section.page { display: flex; flex-direction: column; gap: 16px; }
 .tab.active { background: var(--signal-dim); color: var(--signal); border-color: rgba(61,220,151,.3); }
 
 /* ---------- Table ---------- */
+.table-search-row { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+.table-search {
+  width: 220px; background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text); border-radius: 10px; padding: 8px 12px; font-size: 13px;
+  font-family: var(--font-ui);
+}
+.table-search::placeholder { color: var(--muted-2); }
 .table-wrap { overflow-x: auto; }
 table { width: 100%; min-width: 560px; font-size: 13px; border-collapse: collapse; }
 thead { background: var(--surface-2); }
@@ -391,6 +398,9 @@ pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--mut
         <button data-proto="vless" class="proto-tab tab">VLess</button>
         <button data-proto="trojan" class="proto-tab tab">Trojan</button>
       </div>
+      <div class="table-search-row">
+        <input type="text" id="akun-search" class="table-search" placeholder="Cari user...">
+      </div>
       <div class="panel table-wrap" style="padding:0;">
         <table>
           <thead><tr><th>User</th><th>Expired</th><th>Status</th><th class="r">Aksi</th></tr></thead>
@@ -423,6 +433,9 @@ pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--mut
       <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">
         Semua akun (VMess/VLess/Trojan) yang expired dalam 7 hari ke depan, diurut paling cepat dulu.
       </div>
+      <div class="table-search-row">
+        <input type="text" id="expiring-search" class="table-search" placeholder="Cari user...">
+      </div>
       <div class="panel table-wrap" style="padding:0;">
         <table>
           <thead><tr><th>Proto</th><th>User</th><th>Expired</th><th>Status</th><th class="r">Aksi</th></tr></thead>
@@ -443,6 +456,9 @@ pre.port-list { font-family: var(--font-mono); font-size: 12px; color: var(--mut
         <button data-proto="vmess" class="restore-proto-tab tab">VMess</button>
         <button data-proto="vless" class="restore-proto-tab tab">VLess</button>
         <button data-proto="trojan" class="restore-proto-tab tab">Trojan</button>
+      </div>
+      <div class="table-search-row">
+        <input type="text" id="restore-search" class="table-search" placeholder="Cari user...">
       </div>
       <div class="panel table-wrap" style="padding:0;">
         <table>
@@ -831,6 +847,7 @@ document.querySelectorAll(".proto-tab").forEach(b => b.onclick = () => {
 let accountsCache = [];
 let akunPage = 0;
 let akunPageSize = 15;
+let akunSearch = "";
 
 async function loadAccounts() {
   const a = await api("GET", "/accounts");
@@ -846,8 +863,15 @@ function badge(dl) {
   return `<span class="badge badge--ok">${dl}d left</span>`;
 }
 
+document.getElementById("akun-search").oninput = (e) => {
+  akunSearch = e.target.value.trim().toLowerCase();
+  akunPage = 0;
+  renderAkunTable();
+};
+
 function renderAkunTable() {
-  const all = accountsCache.filter(r => r.proto === currentProto);
+  let all = accountsCache.filter(r => r.proto === currentProto);
+  if (akunSearch) all = all.filter(r => r.user.toLowerCase().includes(akunSearch));
   const totalPages = Math.max(1, Math.ceil(all.length / akunPageSize));
   akunPage = Math.max(0, Math.min(akunPage, totalPages - 1));
   const rows = all.slice(akunPage * akunPageSize, (akunPage + 1) * akunPageSize);
@@ -885,12 +909,26 @@ document.getElementById("akun-next").onclick = () => { akunPage++; renderAkunTab
 
 // ---- Akan Expired ----
 const PROTO_LABEL = { vmess: "VMess", vless: "VLess", trojan: "Trojan" };
+let expiringCache = [];
+let expiringSearch = "";
 
 async function loadExpiringSoon() {
   const a = await api("GET", "/accounts");
-  const soon = (a.accounts || [])
+  expiringCache = (a.accounts || [])
     .filter(r => r.days_left <= 7)
     .sort((x, y) => x.days_left - y.days_left);
+  renderExpiringTable();
+}
+
+document.getElementById("expiring-search").oninput = (e) => {
+  expiringSearch = e.target.value.trim().toLowerCase();
+  renderExpiringTable();
+};
+
+function renderExpiringTable() {
+  const soon = expiringSearch
+    ? expiringCache.filter(r => r.user.toLowerCase().includes(expiringSearch))
+    : expiringCache;
   document.getElementById("expiring-table").innerHTML = soon.length ? soon.map(r => `
     <tr>
       <td>${PROTO_LABEL[r.proto] || r.proto}</td>
@@ -916,6 +954,7 @@ async function doRenewExpiring(proto, user) {
 // ---- Restore ----
 let currentRestoreProto = "vmess";
 let archivedCache = [];
+let restoreSearch = "";
 
 document.querySelectorAll(".restore-proto-tab").forEach(b => b.onclick = () => {
   currentRestoreProto = b.dataset.proto;
@@ -923,6 +962,11 @@ document.querySelectorAll(".restore-proto-tab").forEach(b => b.onclick = () => {
   b.classList.add("active");
   loadArchived();
 });
+
+document.getElementById("restore-search").oninput = (e) => {
+  restoreSearch = e.target.value.trim().toLowerCase();
+  renderRestoreTable();
+};
 
 async function loadArchived() {
   document.querySelectorAll(".restore-proto-tab").forEach(x => {
@@ -934,7 +978,10 @@ async function loadArchived() {
 }
 
 function renderRestoreTable() {
-  document.getElementById("restore-table").innerHTML = archivedCache.length ? archivedCache.map(a => `
+  const rows = restoreSearch
+    ? archivedCache.filter(a => a.user.toLowerCase().includes(restoreSearch))
+    : archivedCache;
+  document.getElementById("restore-table").innerHTML = rows.length ? rows.map(a => `
     <tr>
       <td><code>${a.user}</code></td>
       <td style="color:var(--muted);">${a.exp}</td>
@@ -973,7 +1020,8 @@ async function doInfo(user) {
 
 const LINK_LABELS = [
   ["LINK_TLS", "TLS (WS)"], ["LINK_NTLS", "NTLS (WS)"], ["LINK_GRPC", "gRPC"],
-  ["LINK_UPGRADE", "HTTPUpgrade"], ["LINK_XHTTP", "XHTTP"], ["LINK_WS", "WS"],
+  ["LINK_UPGRADE", "HTTPUpgrade"], ["LINK_XHTTP", "XHTTP"],
+  ["LINK_REALITY", "XHTTP+REALITY"], ["LINK_WS", "WS"],
 ];
 function formatLinks(r) {
   return LINK_LABELS.filter(([k]) => r[k]).map(([k, label]) => `

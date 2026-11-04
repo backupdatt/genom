@@ -23,6 +23,11 @@ esac
 
 # Emits every link variant (TLS/NTLS/gRPC/HTTPUpgrade/XHTTP for vmess & vless,
 # WS/gRPC for trojan — trojan has no httpupgrade/xhttp inbound configured).
+# VLESS also gets REALITY+XHTTP (port 2096) when the server has generated
+# /etc/xray/reality_public_key + reality_short_id (see SYSTEM/ins-xray.sh).
+# create/restore/delete keep all 5 VLESS inbounds (vl/vlg/vlup/vlxh/vlrl) in
+# sync — they used to only touch vl/vlg, which silently broke HTTPUpgrade
+# and XHTTP links for every account created after that drifted.
 emit_links() {
   local user="$1" secret="$2"
   case "$proto" in
@@ -44,6 +49,11 @@ emit_links() {
       echo "LINK_GRPC=vless://${secret}@${domain}:443?mode=gun&security=tls&encryption=none&type=grpc&serviceName=vless-grpc&sni=${domain}#${user}"
       echo "LINK_UPGRADE=vless://${secret}@${domain}:443?path=/vless-up&security=tls&encryption=none&host=${domain}&type=httpupgrade&sni=${domain}&alpn=http/1.1#${user}"
       echo "LINK_XHTTP=vless://${secret}@${domain}:443?path=/vless-xhttp&security=tls&encryption=none&host=${domain}&type=xhttp&sni=${domain}&alpn=h2,http/1.1#${user}"
+      local reality_pbk=$(cat /etc/xray/reality_public_key 2>/dev/null)
+      local reality_sid=$(cat /etc/xray/reality_short_id 2>/dev/null)
+      if [ -n "$reality_pbk" ] && [ -n "$reality_sid" ]; then
+        echo "LINK_REALITY=vless://${secret}@${domain}:2096?security=reality&encryption=none&pbk=${reality_pbk}&fp=chrome&type=xhttp&sni=www.microsoft.com&sid=${reality_sid}&path=%2Fvless-reality&mode=auto#${user}"
+      fi
       ;;
     trojan)
       echo "LINK_WS=trojan://${secret}@${domain}:443?path=%2Ftrojan-ws&security=tls&host=${domain}&type=ws&sni=${domain}#${user}"
@@ -94,6 +104,12 @@ create)
 },{\"id\": \"${uuid}\",\"email\": \"${user}\"" "$CONFIG"
     sed -i "/#vlessgrpc\$/a\\${mark2} ${user} ${exp}\\
 },{\"id\": \"${uuid}\",\"email\": \"${user}\"" "$CONFIG"
+    sed -i "/#vlessup\$/a\\#vlup ${user} ${exp}\\
+},{\"id\": \"${uuid}\",\"email\": \"${user}\"" "$CONFIG"
+    sed -i "/#vlessxhttp\$/a\\#vlxh ${user} ${exp}\\
+},{\"id\": \"${uuid}\",\"email\": \"${user}\"" "$CONFIG"
+    sed -i "/#vlessreality\$/a\\#vlrl ${user} ${exp}\\
+},{\"id\": \"${uuid}\",\"email\": \"${user}\"" "$CONFIG"
   else
     sed -i "/#vmess\$/a\\${mark1} ${user} ${exp}\\
 },{\"id\": \"${uuid}\",\"alterId\": 0,\"email\": \"${user}\"" "$CONFIG"
@@ -121,6 +137,11 @@ delete)
   fi
   sed -i "/^${mark1} ${user} ${exp}/,/^},{/d" "$CONFIG"
   sed -i "/^${mark2} ${user} ${exp}/,/^},{/d" "$CONFIG"
+  if [ "$proto" = "vless" ]; then
+    sed -i "/^#vlup ${user} ${exp}/,/^},{/d" "$CONFIG"
+    sed -i "/^#vlxh ${user} ${exp}/,/^},{/d" "$CONFIG"
+    sed -i "/^#vlrl ${user} ${exp}/,/^},{/d" "$CONFIG"
+  fi
   rm -f "/home/vps/public_html/${proto}-${user}.txt" "${dir}/${user}IP" "${dir}/${user}" "${dir}/${user}login"
   rm -f "/etc/cron.d/trial${proto}${user}"
   systemctl restart xray >/dev/null 2>&1
@@ -241,6 +262,12 @@ restore)
     sed -i "/#vless\$/a\\${mark1} ${user} ${exp} ${uuid}\\
 },{\"id\": \"${uuid}\",\"email\": \"${user}\"" "$CONFIG"
     sed -i "/#vlessgrpc\$/a\\${mark2} ${user} ${exp}\\
+},{\"id\": \"${uuid}\",\"email\": \"${user}\"" "$CONFIG"
+    sed -i "/#vlessup\$/a\\#vlup ${user} ${exp}\\
+},{\"id\": \"${uuid}\",\"email\": \"${user}\"" "$CONFIG"
+    sed -i "/#vlessxhttp\$/a\\#vlxh ${user} ${exp}\\
+},{\"id\": \"${uuid}\",\"email\": \"${user}\"" "$CONFIG"
+    sed -i "/#vlessreality\$/a\\#vlrl ${user} ${exp}\\
 },{\"id\": \"${uuid}\",\"email\": \"${user}\"" "$CONFIG"
   else
     sed -i "/#vmess\$/a\\${mark1} ${user} ${exp}\\

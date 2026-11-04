@@ -2,6 +2,17 @@
 
 Format ikut [Keep a Changelog](https://keepachangelog.com/).
 
+### [2026-11-04]
+
+#### 🔒 Security — Xray update ke 26.10.31 (MPTCP dimatiin default)
+Kernel Linux ketauan ada bug di IPv4 MPTCP yang bikin remote root jadi gampang, dan Go 1.24+ (bahasa xray-core) ngaktifin MPTCP by default — versi ini matiin MPTCP buat ngurangin attack surface. Update lewat installer resmi, semua 78 akun diverifikasi tetep utuh dan handshake WS tetep jalan normal setelahnya.
+
+#### ✨ Added — Varian link baru: VLESS+REALITY+XHTTP (port 2096)
+Nambah 1 varian koneksi baru di samping TLS/NTLS/gRPC/HTTPUpgrade/XHTTP yang udah ada: REALITY (kamuflase TLS, nyamar jadi `www.microsoft.com`) dibungkus XHTTP transport, listen langsung di port 2096 (belum lewat nginx/443). Dites dulu manual pakai akun terpisah sebelum di-backfill ke semua akun vless yang ada dan diotomatisin di `account.sh` (create/restore/delete) + ditambahin ke daftar link di bot Telegram & dashboard.
+
+#### 🐛 Fixed — HTTPUpgrade & XHTTP (vless) drift dari `account.sh`
+Ketauan pas nambah REALITY: `account.sh` ternyata cuma pernah sync ke 2 dari 4 inbound vless (WS & gRPC), jadi 8 akun gak pernah kebagian entry di inbound HTTPUpgrade/XHTTP-nya — link itu kemungkinan gak connect buat mereka. 8 akun itu di-backfill manual, dan `account.sh` (create/restore/delete) sekarang sync ke semua 5 inbound vless sekaligus biar gak drift lagi.
+
 ### [2026-10-25]
 
 #### 🔒 Security — Xray kepasang versi yang ditarik XTLS, update ke stable

@@ -137,6 +137,18 @@ mkdir -p /home/vps/public_html
 
 # set uuid
 uuid=$(cat /proc/sys/kernel/random/uuid)
+
+# REALITY keypair for the VLESS+REALITY+XHTTP variant (port 2096). Generated
+# once per install; only the public key + short ID need to survive for
+# account.sh to build client links (the private key only ever lives in
+# config.json).
+reality_keys=$(xray x25519)
+reality_priv=$(echo "$reality_keys" | grep PrivateKey | awk '{print $2}')
+reality_pub=$(echo "$reality_keys" | grep Password | awk '{print $3}')
+reality_sid=$(openssl rand -hex 8)
+echo "$reality_pub" > /etc/xray/reality_public_key
+echo "$reality_sid" > /etc/xray/reality_short_id
+
 # xray config
 cat > /etc/xray/config.json << END
 {
@@ -379,6 +391,37 @@ cat > /etc/xray/config.json << END
           "host": ""
         }
       }
+    },
+    {
+      "listen": "0.0.0.0",
+      "port": "2096",
+      "protocol": "vless",
+      "settings": {
+        "decryption": "none",
+        "clients": [
+          {
+            "id": "${uuid}"
+#vlessreality
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "xhttp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "www.microsoft.com:443",
+          "xver": 0,
+          "serverNames": ["www.microsoft.com"],
+          "privateKey": "${reality_priv}",
+          "shortIds": ["${reality_sid}"]
+        },
+        "xhttpSettings": {
+          "path": "/vless-reality",
+          "mode": "auto"
+        }
+      },
+      "tag": "vless-reality-xhttp"
     },
     {
       "listen": "127.0.0.1",
