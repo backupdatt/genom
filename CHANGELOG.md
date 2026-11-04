@@ -22,6 +22,9 @@ Rule ini (ditambah hari ini juga, lihat entri sebelumnya) buat jaga-jaga andai I
 #### 🐛 Fixed — `online.sh` gak kebaca client yang connect lewat IPv6
 Regex ekstraksi IP di `online.sh` (buat "Online Now") cuma ngenalin format IPv4 — user yang connect lewat IPv6 tetep kedetek online (itu berdasar timestamp log), tapi kolom IP/city/ISP-nya kosong. Sekarang bisa baca IPv6 yang dibungkus kurung siku (`[2001:db8::1]:port`) juga, termasuk filter private-range IPv6-nya (`lib-ipinfo.sh`).
 
+#### 🐛 Fixed — File config akun (`.txt`/`.ovpn`) & landing page gak bisa diakses dari browser
+`location /` di nginx nge-proxy semua path yang gak match ke daemon tunnel WS-SSH (`ws-dropbear`, port 700) — yang gak ngerti request HTTP biasa, jadi balik 502. Akibatnya file `vless-<user>.txt`, `*.ovpn`, dan `index.html` gak pernah bisa diakses langsung lewat URL, dari dulu (bukan baru). Ditambah location block khusus buat extension itu + `index.html` sebelum catch-all-nya, biar kebaca sebagai file statis.
+
 #### 🔒 Added — Rule routing: Netflix dipaksa IPv4 (jaga-jaga buat IPv6 nanti)
 Sambil diskusi soal nambah IPv6 di VPS (belum ada sekarang), ketemu resiko: kalau IPv6 nanti aktif tapi blok-nya kebaca negara salah sama Netflix, klien bakal prefer IPv6 (Happy Eyeballs) dan nentuin library dari situ — walau IPv4-nya udah bener. Dipasang rule + outbound `netflix-ipv4-only` (`domainStrategy: ForceIPv4`) buat domain Netflix sekarang juga, sebelum IPv6 beneran ada, biar otomatis aman duluan.
 
