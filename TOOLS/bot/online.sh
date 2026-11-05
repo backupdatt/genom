@@ -4,6 +4,21 @@
 # see README changelog). "Online" = traffic seen within the last 2 minutes.
 # Client addresses in the log are IPv4 "1.2.3.4:port" or bracketed IPv6
 # "[2001:db8::1]:port" — extract_ip() below handles both.
+#
+# This scan (23 users x up to 2000 log lines, several passes each) can take
+# 20-30s on a loaded server, but the dashboard polls this script every 5s —
+# without a lock, each poll pile up its own full scan on top of the last,
+# eating CPU faster than any of them finish. LOCK/CACHE below: if another
+# scan is already running, serve its last finished result instead of
+# starting a redundant one.
+LOCK="/tmp/.blackmagic-online.lock"
+CACHE="/tmp/.blackmagic-online.cache"
+exec 9>"$LOCK"
+if ! flock -n 9; then
+  cat "$CACHE" 2>/dev/null || echo "[]"
+  exit 0
+fi
+
 ACCESS="/var/log/xray/access.log"
 CONFIG="/etc/xray/config.json"
 NOW=$(date +%s)
@@ -34,6 +49,7 @@ json_escape() {
   sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' <<< "$1"
 }
 
+{
 first=1
 echo -n "["
 for proto_mark in "#vmg:vmess" "#vlg:vless" "#trg:trojan"; do
@@ -60,3 +76,4 @@ for proto_mark in "#vmg:vmess" "#vlg:vless" "#trg:trojan"; do
   done
 done
 echo "]"
+} > "${CACHE}.tmp" && mv "${CACHE}.tmp" "$CACHE" && cat "$CACHE"
