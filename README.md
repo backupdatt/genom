@@ -402,6 +402,28 @@ pihak ketiga).
 
 ---
 
+## 🆕 Masalah Umum Pas Fresh Install VPS Baru
+
+> Ditemukan pas install ulang dari nol ke VPS baru (Herza, Nov 2026).
+> Install `ssh-vpn.sh` + `ins-xray.sh` sendiri jalan lancar, tapi beberapa
+> hal ini **gak otomatis kebawa** dan baru ketahuan pas dites manual.
+
+| # | Masalah | Kapan ketahuan | Perbaikan |
+|---|---------|-----------------|-----------|
+| 1 | `apt install iptables-persistent` di `ins-xray.sh` nge-hang nunggu prompt debconf ("save rules IPv4/IPv6?") kalau dijalankan lewat SSH non-interaktif (`DEBIAN_FRONTEND=noninteractive` gak di-set di script ini, beda sama `ssh-vpn.sh`) | Install macet ~5 menit di langkah ini tanpa progress | `echo 'iptables-persistent iptables-persistent/autosave_v4 boolean true' \| debconf-set-selections` (sama buat v6) sebelum install, atau kill proses yang nge-hang lalu `dpkg --configure iptables-persistent` manual |
+| 2 | Xray gagal start: `permission denied` buka `/var/log/xray/access.log` — folder log dibuat punya `xray:xray` (`700`), tapi systemd unit jalanin xray sebagai `www-data` | `systemctl status xray` nunjuk exit code 23 | `chown -R www-data:www-data /var/log/xray && chmod 755 /var/log/xray` |
+| 3 | `ws-stunnel.service` hardcode port **701**, padahal nginx proxy ke port **700** — bikin landing page/download-link `.txt` kena 502 terus | Akses domain lewat browser selalu 502 | Edit `ExecStart=.../ws-stunnel 701` jadi `700` di `/etc/systemd/system/ws-stunnel.service`, lalu `daemon-reload` + restart |
+| 4 | `/home/vps` permission `750` punya `vps:vps` — nginx (`www-data`) gak bisa *traverse* masuk sama sekali, walau `public_html` di dalemnya udah `775` | Semua file `.txt`/`.ovpn` kena 403, walau filenya ada | `chmod o+x /home/vps` (cukup tambah execute buat others, gak perlu ubah rwx lain) |
+| 5 | Nginx `/vless-xhttp`, `/vmess-xhttp` gak punya `proxy_read_timeout` sendiri → kena default nginx 60s, padahal XHTTP butuh koneksi long-lived. Berujung banyak user "disconnect" bareng pas lagi aktif connect | Muncul manual, pas banyak user connect bersamaan dalam durasi lama | Tambah `proxy_read_timeout 300s; proxy_send_timeout 300s; proxy_buffering off; proxy_request_buffering off;` di location block `/vless-xhttp` & `/vmess-xhttp` |
+| 6 | Command `menu` gak ada — `ssh-vpn.sh` cuma download `issue`, `m-theme`, `speedtest`, `xp` ke `/usr/bin`, **gak pernah download `menu/menu.sh` jadi `/usr/bin/menu`** | `menu` → "command not found" | Copy manual: `cp menu/menu.sh /usr/bin/menu && chmod +x /usr/bin/menu` (plus isi `/etc/xray/license.conf`, lihat STEP 4) |
+| 7 | Dashboard nunjuk City/ISP kosong terus — `status.sh`/`lib-ipinfo.sh` baca token IPinfo dari `grep ... /usr/bin/menu`, jadi otomatis kosong kalau masalah #6 belum dibenerin | Field City/ISP di dashboard selalu blank | Beres sendiri begitu masalah #6 dibenerin (token-nya emang hardcoded di `menu.sh`) |
+| 8 | Dashboard nunjuk IP VPS kosong — provider ngasih 2 nameserver di `/etc/netplan/*.yaml`, nameserver PERTAMA mati total (`timeout`), bikin tiap curl ke `icanhazip.com` nunggu lama/gagal sebelum fallback ke yang kedua | Field IP di dashboard selalu blank, `curl: (28) Resolving timed out` | Cek nameserver satu-satu (`timeout 5 nslookup host NAMESERVER_IP`), ganti yang mati di `/etc/netplan/*.yaml` (bukan cuma `/etc/resolv.conf`, biar gak ketimpa pas reboot), lalu `netplan apply` |
+| 9 | File config publik `vless-<user>.txt` gak ada (404) buat akun yang ditambahin langsung lewat `config.json` (migrasi manual/script), karena generate file ini ada di `menu/m-vless.sh` (dipanggil pas create via menu CLI), BUKAN di `TOOLS/bot/account.sh` (dipanggil via Telegram bot) | Link download config 404 walau akun-nya valid & bisa connect | Generate ulang manual pakai template di `menu/m-vless.sh` (baris `cat > /home/vps/public_html/vless-$user.txt <<-END ... END`) buat tiap user yang di-migrasi manual |
+| 10 | Migrasi akun antar-server (copy UUID+expiry dari server A ke config.json server B) **harus insert ke 5 marker vless** (`#vl`, `#vlg`, `#vlup`, `#vlxh`, `#vlrl`), persis di titik anchor yang sama kayak `account.sh` create (`#vless$`, `#vlessgrpc$`, `#vlessup$`, `#vlessxhttp$`, `#vlessreality$`) — kalau cuma sebagian, akun kelihatan ada tapi protokol tertentu gak jalan | Ketauan pas bandingin jumlah marker (`grep -c '^#vlxh '` dkk) beda-beda antar protokol buat user yang sama | Insert ke SEMUA 5 anchor sekaligus pakai 1 script, verifikasi `grep -c` tiap marker hasilnya sama rata |
+| 11 | Dashboard "Online"/jumlah-IP per user selalu `0 IP` walau request-nya banyak — `config.json` fresh install gak punya `"sockopt": { "trustedXForwardedFor": ["X-Forwarded-For"] }` di `streamSettings` tiap inbound WS/gRPC/HTTPUpgrade/XHTTP, jadi `access.log` xray cuma nyatet `127.0.0.1` (koneksi lokal dari nginx), bukan IP publik asli — `online.sh`'s `extract_ip()` nge-filter `127.*` sebagai loopback. Fix-nya udah ada di `CHANGELOG.md` tapi gak ke-generate otomatis sama `ins-xray.sh` | Dashboard nunjuk `0 IP` di semua akun walau "X request" jalan terus | Insert `sockopt` itu ke tiap inbound WS/gRPC/HTTPUpgrade/XHTTP (bukan yang `tcp,udp` atau REALITY) di `/etc/xray/config.json`, lalu `systemctl restart xray`. Verifikasi: `tail /var/log/xray/access.log` harus nunjuk IP publik asli, bukan `127.0.0.1` |
+
+---
+
 ## 📋 Changelog
 
 Riwayat lengkap tiap perubahan (termasuk yang dicoba lalu di-revert) udah
