@@ -7,6 +7,9 @@ Format ikut [Keep a Changelog](https://keepachangelog.com/).
 #### 🐛 Fixed — `online.sh` numpuk proses sampai CPU overload
 Dashboard polling "Online Now" tiap 5 detik, tapi `online.sh` (scan ~2000 baris log x 23 akun) butuh 20-30 detik buat selesai — tiap poll numpuk 1 proses baru di atas yang lama, lama-lama CPU server kehabisan sampai SSH sendiri kesulitan connect. Dipasang lock (`flock`) + cache ditulis atomic: kalau ada scan yang masih jalan, request baru langsung dikasih hasil terakhir yang valid, gak numpuk/ngitung ulang.
 
+#### 🐛 Fixed — `status.sh` fetch IP/geolocation ke API luar tiap panggilan
+Ketauan pas nyari lanjutan masalah di atas: `status.sh` (juga dipanggil dashboard tiap 5 detik) manggil `icanhazip.com` + `ipinfo.io` **setiap kali**, padahal IP publik VPS gak pernah berubah antar-poll. Kalau salah satu API itu lambat (`--max-time 5` masing-masing, bisa sampe 10 detik total), request numpuk nunggu network — lebih parah dari `online.sh` karena ini nunggu server luar. Sekarang IP+geolocation di-cache 10 menit, cuma refresh kalau beneran udah stale.
+
 ### [2026-11-04]
 
 #### 🔒 Security — Xray update ke 26.10.31 (MPTCP dimatiin default)
