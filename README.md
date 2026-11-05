@@ -422,6 +422,13 @@ pihak ketiga).
 | 10 | Migrasi akun antar-server (copy UUID+expiry dari server A ke config.json server B) **harus insert ke 5 marker vless** (`#vl`, `#vlg`, `#vlup`, `#vlxh`, `#vlrl`), persis di titik anchor yang sama kayak `account.sh` create (`#vless$`, `#vlessgrpc$`, `#vlessup$`, `#vlessxhttp$`, `#vlessreality$`) — kalau cuma sebagian, akun kelihatan ada tapi protokol tertentu gak jalan | Ketauan pas bandingin jumlah marker (`grep -c '^#vlxh '` dkk) beda-beda antar protokol buat user yang sama | Insert ke SEMUA 5 anchor sekaligus pakai 1 script, verifikasi `grep -c` tiap marker hasilnya sama rata |
 | 11 | Dashboard "Online"/jumlah-IP per user selalu `0 IP` walau request-nya banyak — `config.json` fresh install gak punya `"sockopt": { "trustedXForwardedFor": ["X-Forwarded-For"] }` di `streamSettings` tiap inbound WS/gRPC/HTTPUpgrade/XHTTP, jadi `access.log` xray cuma nyatet `127.0.0.1` (koneksi lokal dari nginx), bukan IP publik asli — `online.sh`'s `extract_ip()` nge-filter `127.*` sebagai loopback. Fix-nya udah ada di `CHANGELOG.md` tapi gak ke-generate otomatis sama `ins-xray.sh` | Dashboard nunjuk `0 IP` di semua akun walau "X request" jalan terus | Insert `sockopt` itu ke tiap inbound WS/gRPC/HTTPUpgrade/XHTTP (bukan yang `tcp,udp` atau REALITY) di `/etc/xray/config.json`, lalu `systemctl restart xray`. Verifikasi: `tail /var/log/xray/access.log` harus nunjuk IP publik asli, bukan `127.0.0.1` |
 
+> **Boleh diabaikan di fresh install:** `/usr/bin/autocpu`, `/usr/bin/bottelegram`,
+> `/usr/bin/tendang`, `/usr/bin/xraylimit` — semua ini legacy/dead feature
+> (SSH-tunnel multi-login kicker & IP-limit lama), dicek dan ternyata
+> gak dipakai aktif sama sekali bahkan di server production asli (Biznet):
+> gak ada akun SSH-tunnel customer beneran, dan `xraylimit` udah digantikan
+> `TOOLS/bot/iplimit-daemon.py`. Gak perlu diinstall ulang pas setup server baru.
+
 ---
 
 ## 📋 Changelog
