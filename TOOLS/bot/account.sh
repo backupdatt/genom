@@ -13,6 +13,10 @@ CONFIG="/etc/xray/config.json"
 ARCHIVE_LOG="/etc/xray-archive/archive.log"
 action="$1"; proto="$2"
 domain=$(cat /etc/xray/domain 2>/dev/null || echo "N/A")
+# REALITY doesn't need (or want) a domain - it's the whole point of it being
+# immune to domain-level blocking. Use the server's own public IP instead,
+# cached in /etc/xray/ip (falls back to a live lookup if that's missing).
+reality_addr=$(cat /etc/xray/ip 2>/dev/null || curl -s4 --max-time 3 ifconfig.me 2>/dev/null || echo "$domain")
 
 case "$proto" in
   vmess)  mark1="#vm"; mark2="#vmg"; dir="/etc/vmess"; field="id" ;;
@@ -52,7 +56,7 @@ emit_links() {
       local reality_pbk=$(cat /etc/xray/reality_public_key 2>/dev/null)
       local reality_sid=$(cat /etc/xray/reality_short_id 2>/dev/null)
       if [ -n "$reality_pbk" ] && [ -n "$reality_sid" ]; then
-        echo "LINK_REALITY=vless://${secret}@${domain}:2096?security=reality&encryption=none&pbk=${reality_pbk}&fp=chrome&type=xhttp&sni=www.microsoft.com&sid=${reality_sid}&path=%2Fvless-reality&mode=auto#${user}"
+        echo "LINK_REALITY=vless://${secret}@${reality_addr}:2096?security=reality&encryption=none&pbk=${reality_pbk}&fp=chrome&type=xhttp&sni=www.microsoft.com&sid=${reality_sid}&path=%2Fvless-reality&mode=auto#${user}"
       fi
       ;;
     trojan)
