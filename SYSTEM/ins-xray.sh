@@ -727,6 +727,27 @@ sed -i '$ i{' /etc/nginx/conf.d/xray.conf
 sed -i '$ iroot /home/vps/public_html;' /etc/nginx/conf.d/xray.conf
 sed -i '$ i}' /etc/nginx/conf.d/xray.conf
 
+# Bare "/" (just the domain with no path) must match here too, or it falls
+# through to the DEFAULT ROUTE below and gets proxied into the ws-stunnel
+# tunnel daemon instead of serving the landing page - the daemon has no
+# idea what to do with a plain HTTP GET and the request just hangs until
+# nginx's proxy_read_timeout kicks in.
+sed -i '$ ilocation = /' /etc/nginx/conf.d/xray.conf
+sed -i '$ i{' /etc/nginx/conf.d/xray.conf
+sed -i '$ iroot /home/vps/public_html;' /etc/nginx/conf.d/xray.conf
+sed -i '$ iindex index.html;' /etc/nginx/conf.d/xray.conf
+sed -i '$ i}' /etc/nginx/conf.d/xray.conf
+
+# Browsers auto-request this; without a dedicated block it hits the same
+# ws-stunnel-hang issue as bare "/" above (no favicon.ico file exists, and
+# we don't want one - just stop nginx from proxying the request at all).
+sed -i '$ ilocation = /favicon.ico' /etc/nginx/conf.d/xray.conf
+sed -i '$ i{' /etc/nginx/conf.d/xray.conf
+sed -i '$ ilog_not_found off;' /etc/nginx/conf.d/xray.conf
+sed -i '$ iaccess_log off;' /etc/nginx/conf.d/xray.conf
+sed -i '$ ireturn 204;' /etc/nginx/conf.d/xray.conf
+sed -i '$ i}' /etc/nginx/conf.d/xray.conf
+
 # DEFAULT ROUTE
 sed -i '$ ilocation /' /etc/nginx/conf.d/xray.conf
 sed -i '$ i{' /etc/nginx/conf.d/xray.conf
