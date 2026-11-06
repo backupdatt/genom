@@ -56,7 +56,7 @@ emit_links() {
       local reality_pbk=$(cat /etc/xray/reality_public_key 2>/dev/null)
       local reality_sid=$(cat /etc/xray/reality_short_id 2>/dev/null)
       if [ -n "$reality_pbk" ] && [ -n "$reality_sid" ]; then
-        echo "LINK_REALITY=vless://${secret}@${reality_addr}:2096?security=reality&encryption=none&pbk=${reality_pbk}&fp=chrome&type=xhttp&sni=www.microsoft.com&sid=${reality_sid}&path=%2Fvless-reality&mode=auto#${user}"
+        echo "LINK_REALITY=vless://${secret}@${reality_addr}:2096?security=reality&encryption=none&pbk=${reality_pbk}&fp=firefox&type=xhttp&sni=www.microsoft.com&sid=${reality_sid}&path=%2Fvless-reality&mode=auto#${user}"
       fi
       ;;
     trojan)
